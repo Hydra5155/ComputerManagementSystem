@@ -9,8 +9,8 @@
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            // Lấy URL của API từ biến môi trường/appsettings, nếu không có thì mặc định gọi cổng nội bộ 5000
-            var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000/api/";
+            // Lấy URL của API từ biến môi trường/appsettings, mặc định gọi loopback IPv4 nội bộ 127.0.0.1:5000
+            var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://127.0.0.1:5000/api/";
             if (!apiBaseUrl.EndsWith("/"))
             {
                 apiBaseUrl += "/";
@@ -20,6 +20,7 @@
             builder.Services.AddHttpClient("StoreAPI", client =>
             {
                 client.BaseAddress = new Uri(apiBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(30);
             }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
                 // Bỏ qua kiểm tra chứng chỉ SSL (hữu ích cho môi trường dev và container)
@@ -46,6 +47,9 @@
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
+
+            // Phục vụ file tĩnh (CSS, JS, hình ảnh)
+            app.UseStaticFiles();
 
             app.UseRouting();
 
