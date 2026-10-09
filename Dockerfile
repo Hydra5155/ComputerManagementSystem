@@ -1,32 +1,28 @@
-# Stage 1: Build cả 2 ứng dụng
+# Stage 1: Build Web và API
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copy toàn bộ solution và source code
+# Copy toàn bộ mã nguồn vào
 COPY . .
 
-# Restore dependencies
-RUN dotnet restore
-
-# Publish ComputerStore.API
+# Chỉ restore và publish riêng project API
 RUN dotnet publish "ComputerStore.API/ComputerStore.API.csproj" -c Release -o /app/publish/api
 
-# Publish ComputerStore.Web
+# Chỉ restore và publish riêng project Web
 RUN dotnet publish "ComputerStore.Web/ComputerStore.Web.csproj" -c Release -o /app/publish/web
 
 # Stage 2: Runtime
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 
-# Copy kết quả build vào các thư mục tương ứng
+# Copy sản phẩm đã build sang môi trường runtime
 COPY --from=build /app/publish/api ./api
 COPY --from=build /app/publish/web ./web
 
-# Copy file script khởi động
+# Copy file run.sh và cấp quyền thực thi
 COPY run.sh ./run.sh
 RUN chmod +x ./run.sh
 
-# Cổng Render thường map
 EXPOSE 8080
 
 ENTRYPOINT ["./run.sh"]
