@@ -200,3 +200,4 @@ D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\Compute
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Web\obj\Debug\net9.0\ComputerStore.Web.pdb
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Web\obj\Debug\net9.0\ComputerStore.Web.genruntimeconfig.cache
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Web\obj\Debug\net9.0\ref\ComputerStore.Web.dll
+D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Web\obj\Debug\net9.0\ComputerStore.Web.sourcelink.json
