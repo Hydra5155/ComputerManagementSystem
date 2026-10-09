@@ -2,27 +2,25 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copy toàn bộ mã nguồn vào
 COPY . .
 
-# Chỉ restore và publish riêng project API
 RUN dotnet publish "ComputerStore.API/ComputerStore.API.csproj" -c Release -o /app/publish/api
-
-# Chỉ restore và publish riêng project Web
 RUN dotnet publish "ComputerStore.Web/ComputerStore.Web.csproj" -c Release -o /app/publish/web
 
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 
-# Copy sản phẩm đã build sang môi trường runtime
 COPY --from=build /app/publish/api ./api
 COPY --from=build /app/publish/web ./web
 
-# Copy file run.sh và cấp quyền thực thi
-COPY run.sh ./run.sh
-RUN chmod +x ./run.sh
+# Chạy API từ đúng thư mục /app/api để nó load đúng appsettings.json và connection string
+RUN printf '#!/bin/sh\n\
+cd /app/api && ASPNETCORE_URLS=http://0.0.0.0:5000 dotnet ComputerStore.API.dll &\n\
+sleep 4\n\
+cd /app/web && export ASPNETCORE_URLS="http://0.0.0.0:${PORT:-8080}" && exec dotnet ComputerStore.Web.dll\n' > /app/entrypoint.sh \
+    && chmod +x /app/entrypoint.sh
 
 EXPOSE 8080
 
-ENTRYPOINT ["./run.sh"]
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
