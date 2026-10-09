@@ -1,23 +1,32 @@
-# 1. Dùng đúng SDK 9.0
+# Stage 1: Build cả 2 ứng dụng
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Sao chép mã nguồn
+# Copy toàn bộ solution và source code
 COPY . .
 
-# Chỉ restore riêng project Web (kèm theo các project core phụ thuộc)
-RUN dotnet restore "ComputerStore.Web/ComputerStore.Web.csproj"
+# Restore dependencies
+RUN dotnet restore
 
-# Build và Publish ra thư mục publish
-WORKDIR "/src/ComputerStore.Web"
-RUN dotnet publish "ComputerStore.Web.csproj" -c Release -o /app/publish /p:UseAppHost=false
+# Publish ComputerStore.API
+RUN dotnet publish "ComputerStore.API/ComputerStore.API.csproj" -c Release -o /app/publish/api
 
-# 2. Dùng Runtime ASP.NET 9.0
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+# Publish ComputerStore.Web
+RUN dotnet publish "ComputerStore.Web/ComputerStore.Web.csproj" -c Release -o /app/publish/web
+
+# Stage 2: Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
-COPY --from=build /app/publish .
 
-ENV ASPNETCORE_URLS=http://+:10000
-EXPOSE 10000
+# Copy kết quả build vào các thư mục tương ứng
+COPY --from=build /app/publish/api ./api
+COPY --from=build /app/publish/web ./web
 
-ENTRYPOINT ["dotnet", "ComputerStore.Web.dll"]
+# Copy file script khởi động
+COPY run.sh ./run.sh
+RUN chmod +x ./run.sh
+
+# Cổng Render thường map
+EXPOSE 8080
+
+ENTRYPOINT ["./run.sh"]

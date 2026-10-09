@@ -8,10 +8,22 @@
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
-            // Đăng ký HttpClient trỏ đến cổng API đang chạy
+
+            // Lấy URL của API từ biến môi trường/appsettings, nếu không có thì mặc định gọi cổng nội bộ 5000
+            var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000/api/";
+            if (!apiBaseUrl.EndsWith("/"))
+            {
+                apiBaseUrl += "/";
+            }
+
+            // Đăng ký HttpClient duy nhất gọi sang API
             builder.Services.AddHttpClient("StoreAPI", client =>
             {
-                client.BaseAddress = new Uri("http://localhost:5293/");
+                client.BaseAddress = new Uri(apiBaseUrl);
+            }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                // Bỏ qua kiểm tra chứng chỉ SSL (hữu ích cho môi trường dev và container)
+                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
             });
 
             // Thêm hỗ trợ Session và Cache
@@ -22,29 +34,26 @@
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
-            // Đăng ký HttpClient gọi sang API (chú ý có dấu gạch chéo ở cuối)
-            builder.Services.AddHttpClient("StoreAPI", client =>
-            {
-                client.BaseAddress = new Uri("https://localhost:7275/api/");
-            }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
-            });
+
             // Đăng ký HttpContextAccessor để hỗ trợ inject trong Razor Views
             builder.Services.AddHttpContextAccessor();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();
             }
+
             app.UseRouting();
 
+            app.UseSession();
             app.UseAuthorization();
 
             app.MapStaticAssets();
-            app.UseSession();
+
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Product}/{action=Index}/{id?}")
