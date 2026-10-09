@@ -31,14 +31,23 @@ namespace ComputerStore.Web.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[DEBUG API RESPONSE]: {json}");
+
                     products = JsonSerializer.Deserialize<List<Product>>(json, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     }) ?? new List<Product>();
                 }
+                else
+                {
+                    var errorBody = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[DEBUG API ERROR]: Status={(int)response.StatusCode} {response.StatusCode}, Body={errorBody}");
+                    ViewBag.Error = $"API trả về mã lỗi {(int)response.StatusCode}: {errorBody}";
+                }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[DEBUG CALL EXCEPTION]: {ex}");
                 ViewBag.Error = $"Lỗi kết nối API: {ex.Message}";
             }
 
@@ -73,7 +82,7 @@ namespace ComputerStore.Web.Controllers
             {
                 var client = _httpClientFactory.CreateClient("StoreAPI");
 
-                // Thử endpoint lấy chi tiết
+                // Gọi endpoint lấy chi tiết sản phẩm
                 var response = await client.GetAsync($"products/{id}");
                 if (response.IsSuccessStatusCode)
                 {
@@ -85,7 +94,7 @@ namespace ComputerStore.Web.Controllers
                 }
                 else
                 {
-                    // Fallback lấy toàn bộ danh sách để tìm
+                    // Fallback lấy toàn bộ danh sách để tìm nếu endpoint /products/{id} chưa hỗ trợ
                     var listResponse = await client.GetAsync("products");
                     if (listResponse.IsSuccessStatusCode)
                     {
@@ -95,7 +104,8 @@ namespace ComputerStore.Web.Controllers
                             PropertyNameCaseInsensitive = true
                         }) ?? new List<Product>();
 
-                        product = allProducts.FirstOrDefault(p => {
+                        product = allProducts.FirstOrDefault(p =>
+                        {
                             var pIdProp = p.GetType().GetProperty("ProductId") ?? p.GetType().GetProperty("Id");
                             return pIdProp != null && Convert.ToInt32(pIdProp.GetValue(p)) == id;
                         });
@@ -104,6 +114,7 @@ namespace ComputerStore.Web.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[DEBUG DETAIL EXCEPTION]: {ex}");
                 ViewBag.Error = $"Lỗi kết nối: {ex.Message}";
             }
 
