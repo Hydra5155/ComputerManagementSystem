@@ -1,8 +1,13 @@
 ﻿@model ComputerStore.Core.Entities.Product
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 @{
-    ViewData["Title"] = (Model?.Name ?? "Chi tiết sản phẩm") + " - DTBStore";
+    ViewData["Title"] = (Model?.Name ?? "Chi tiết sản phẩm") + " - BMDTStore";
 
-    // 1. Quét thông số / mô tả cấu hình an toàn
+    // 1. Kiểm tra trạng thái đăng nhập của khách hàng
+    var userJson = HttpContextAccessor.HttpContext?.Session.GetString(ComputerStore.Web.Controllers.AccountController.UserSessionKey);
+    bool isLoggedIn = !string.IsNullOrEmpty(userJson);
+
+    // 2. Quét trường cấu hình an toàn
     var itemType = Model?.GetType();
     var specProp = itemType?.GetProperty("Description")
                 ?? itemType?.GetProperty("Specifications")
@@ -10,7 +15,7 @@
                 ?? itemType?.GetProperty("Detail");
     var specs = specProp != null ? (specProp.GetValue(Model)?.ToString() ?? "") : "";
 
-    // 2. Quét trường ảnh an toàn
+    // 3. Quét ảnh
     var imgProp = itemType?.GetProperty("ImageUrl")
                ?? itemType?.GetProperty("Image")
                ?? itemType?.GetProperty("Thumbnail")
@@ -33,120 +38,165 @@
     }
 
     var idVal = Model?.ProductId ?? 0;
-    var nameVal = Model?.Name ?? "Laptop Gaming";
+    var nameVal = Model?.Name ?? "Thiết bị công nghệ";
     var priceVal = Model?.Price ?? 0m;
     var stockVal = Model?.StockQuantity ?? 0;
+    var categoryName = Model?.Category?.Name ?? "Máy tính & Laptop";
 }
 
 <style>
     body {
         background-color: #080c0d !important;
-        color: #ffffff;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #f1f5f9;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     }
 
     .detail-card {
-        background-color: #0e1516;
+        background: #0e1516;
         border: 1px solid #1e453e;
-        border-radius: 12px;
-        padding: 35px;
-        box-shadow: 0 0 30px rgba(93, 242, 214, 0.12);
+        border-radius: 18px;
+        padding: 38px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 35px rgba(93, 242, 214, 0.08);
+        transition: border-color 0.3s ease;
     }
 
+        .detail-card:hover {
+            border-color: rgba(93, 242, 214, 0.35);
+        }
+
     .detail-img-box {
-        background-color: #080c0d;
+        background: radial-gradient(circle at center, #142224 0%, #080c0d 100%);
         border: 1px solid #1e453e;
-        border-radius: 10px;
+        border-radius: 14px;
         padding: 30px;
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 380px;
+        min-height: 400px;
+        position: relative;
+        overflow: hidden;
     }
 
         .detail-img-box img {
-            max-height: 320px;
+            max-height: 330px;
             max-width: 100%;
             object-fit: contain;
-            transition: transform 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-            .detail-img-box img:hover {
-                transform: scale(1.04);
-            }
+        .detail-img-box:hover img {
+            transform: scale(1.06);
+        }
 
     .badge-code {
-        background: transparent;
+        background: rgba(93, 242, 214, 0.08);
         border: 1px solid #206153;
         color: #5df2d6;
         font-size: 12px;
-        padding: 4px 12px;
-        border-radius: 4px;
+        padding: 5px 12px;
+        border-radius: 6px;
         font-weight: 700;
         letter-spacing: 0.5px;
+    }
+
+    .badge-category {
+        background: #142022;
+        border: 1px solid #1e453e;
+        color: #94a3b8;
+        font-size: 12px;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-weight: 600;
     }
 
     .detail-title {
         color: #ffffff;
         font-weight: 800;
-        font-size: 28px;
+        font-size: 30px;
         margin: 18px 0 12px 0;
-        line-height: 1.3;
+        line-height: 1.35;
     }
 
     .detail-price {
-        font-size: 32px;
+        font-size: 34px;
         font-weight: 800;
         color: #5df2d6;
-        margin-bottom: 18px;
-        text-shadow: 0 0 15px rgba(93, 242, 214, 0.3);
+        margin-bottom: 22px;
+        text-shadow: 0 0 18px rgba(93, 242, 214, 0.35);
     }
 
     .specs-box {
         background: #141f21;
         border: 1px solid #1e453e;
-        border-radius: 8px;
-        padding: 20px;
+        border-radius: 10px;
+        padding: 22px;
         font-size: 14.5px;
-        line-height: 1.8;
+        line-height: 1.85;
         color: #e2e8f0;
         white-space: pre-line;
-        margin-bottom: 25px;
+        margin-bottom: 30px;
     }
 
     .qty-input-detail {
         background-color: #141f21;
         border: 1px solid #1e453e;
         color: #ffffff;
-        border-radius: 6px;
+        border-radius: 8px;
         padding: 10px;
         width: 80px;
         text-align: center;
         font-weight: 700;
         font-size: 16px;
         outline: none;
+        transition: border-color 0.2s;
     }
 
         .qty-input-detail:focus {
             border-color: #5df2d6;
+            box-shadow: 0 0 10px rgba(93, 242, 214, 0.25);
         }
 
     .btn-buy-detail {
-        background: linear-gradient(135deg, #00796b, #004d40);
+        background: linear-gradient(135deg, #00897b, #004d40);
         border: 1px solid #5df2d6;
         color: #ffffff;
         font-weight: 700;
-        padding: 12px 36px;
-        border-radius: 6px;
+        padding: 12px 34px;
+        border-radius: 8px;
         cursor: pointer;
         font-size: 15px;
-        transition: 0.25s;
+        transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
 
         .btn-buy-detail:hover {
             background: #5df2d6;
             color: #080c0d;
-            box-shadow: 0 0 16px rgba(93, 242, 214, 0.5);
+            box-shadow: 0 0 22px rgba(93, 242, 214, 0.6);
+            transform: translateY(-2px);
+        }
+
+    .btn-login-to-buy {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid #f87171;
+        color: #fca5a5;
+        font-weight: 700;
+        padding: 12px 28px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.25s ease;
+    }
+
+        .btn-login-to-buy:hover {
+            background: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 0 18px rgba(239, 68, 68, 0.6);
+            transform: translateY(-2px);
         }
 
     .btn-back {
@@ -155,30 +205,29 @@
         color: #8da4a4;
         font-weight: 600;
         padding: 12px 24px;
-        border-radius: 6px;
+        border-radius: 8px;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        transition: 0.2s;
+        transition: all 0.2s ease;
     }
 
         .btn-back:hover {
             color: #5df2d6;
             border-color: #5df2d6;
+            background: #19282b;
         }
 </style>
 
 <div class="container py-4">
-    <!-- Nút điều hướng quay lại -->
-    <a href="/Product" style="color: #5df2d6; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 25px;">
-        ← QUAY LẠI DANH SÁCH MÁY TÍNH
+    <a href="/Product" style="color: #5df2d6; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 25px; transition: transform 0.2s;" onmouseover="this.style.transform='translateX(-3px)'" onmouseout="this.style.transform='none'">
+        <i class="bi bi-arrow-left"></i> QUAY LẠI CỬA HÀNG BMDTSTORE
     </a>
 
     @if (Model != null)
     {
         <div class="detail-card">
             <div class="row align-items-center">
-                <!-- Cột hình ảnh bên trái -->
                 <div class="col-lg-5 mb-4 mb-lg-0">
                     <div class="detail-img-box">
                         <img src="@finalImg"
@@ -187,20 +236,20 @@
                     </div>
                 </div>
 
-                <!-- Cột thông tin chi tiết bên phải -->
                 <div class="col-lg-7 ps-lg-4">
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         <span class="badge-code">MÃ MÁY: #@idVal</span>
+                        <span class="badge-category"><i class="bi bi-laptop me-1"></i>@categoryName</span>
                         @if (stockVal > 0)
                         {
-                            <span style="border: 1px solid #34d399; color: #34d399; font-size: 12px; padding: 4px 10px; border-radius: 4px; font-weight: 600;">
-                                CÒN HÀNG (@stockVal máy sẵn sàng)
+                            <span style="border: 1px solid #34d399; color: #34d399; font-size: 12px; padding: 5px 12px; border-radius: 6px; font-weight: 600; background: rgba(52, 211, 153, 0.08);">
+                                <i class="bi bi-check2-circle me-1"></i> CÒN HÀNG (@stockVal máy sẵn sàng)
                             </span>
                         }
                         else
                         {
-                            <span style="border: 1px solid #f87171; color: #f87171; font-size: 12px; padding: 4px 10px; border-radius: 4px; font-weight: 600;">
-                                TẠM HẾT HÀNG
+                            <span style="border: 1px solid #f87171; color: #f87171; font-size: 12px; padding: 5px 12px; border-radius: 6px; font-weight: 600; background: rgba(248, 113, 113, 0.08);">
+                                <i class="bi bi-x-circle me-1"></i> TẠM HẾT HÀNG
                             </span>
                         }
                     </div>
@@ -212,35 +261,52 @@
                     </div>
 
                     <div>
-                        <div style="color: #5df2d6; font-weight: 700; font-size: 13.5px; margin-bottom: 8px; letter-spacing: 0.5px;">
-                            ⚙️ CẤU HÌNH & THÔNG SỐ KỸ THUẬT:
+                        <div style="color: #5df2d6; font-weight: 700; font-size: 13.5px; margin-bottom: 10px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                            <i class="bi bi-cpu-fill"></i> CẤU HÌNH & THÔNG SỐ KỸ THUẬT:
                         </div>
                         <div class="specs-box">
-                            @(string.IsNullOrWhiteSpace(specs) ? "Chưa có thông số chi tiết cho sản phẩm này." : specs)
+                            @(string.IsNullOrWhiteSpace(specs) ? "Đang cập nhật thông số kỹ thuật chi tiết cho cấu hình máy này..." : specs)
                         </div>
                     </div>
 
-                    <!-- Form mua hàng: Truyền đủ dữ liệu để Giỏ hàng hiển thị chính xác tên và giá -->
-                    <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-flex align-items-center gap-3">
-                        <input type="hidden" name="productId" value="@idVal" />
-                        <input type="hidden" name="id" value="@idVal" />
-                        <input type="hidden" name="productName" value="@nameVal" />
-                        <input type="hidden" name="price" value="@priceVal" />
-                        <input type="hidden" name="imageUrl" value="@finalImg" />
+                    <!-- KHU VỰC NÚT MUA HÀNG (BẮT BUỘC ĐĂNG NHẬP) -->
+                    @if (isLoggedIn)
+                    {
+                        <!-- Khách ĐÃ đăng nhập: Mua hàng bình thường -->
+                        <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-flex align-items-center gap-3 flex-wrap">
+                            <input type="hidden" name="productId" value="@idVal" />
+                            <input type="hidden" name="returnUrl" value="/Product/Detail/@idVal" />
 
-                        <div class="d-flex align-items-center gap-2">
-                            <span style="color: #8da4a4; font-size: 14px;">Số lượng:</span>
-                            <input type="number" name="quantity" class="qty-input-detail" value="1" min="1" max="@(stockVal > 0 ? stockVal : 99)" />
+                            <div class="d-flex align-items-center gap-2">
+                                <span style="color: #8da4a4; font-size: 14px;">Số lượng:</span>
+                                <input type="number" name="quantity" class="qty-input-detail" value="1" min="1" max="@(stockVal > 0 ? stockVal : 99)" />
+                            </div>
+
+                            <button type="submit" class="btn-buy-detail">
+                                <i class="bi bi-cart3"></i> MUA NGAY
+                            </button>
+
+                            <a href="/Product" class="btn-back">
+                                Xem máy khác
+                            </a>
+                        </form>
+                    }
+                    else
+                    {
+                        <!-- Khách CHƯA đăng nhập: Hiển thị nút dẫn sang trang Đăng nhập -->
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="/Product/Detail/@idVal" class="btn-login-to-buy">
+                                <i class="bi bi-box-arrow-in-right"></i> ĐĂNG NHẬP ĐỂ MUA HÀNG
+                            </a>
+
+                            <a href="/Product" class="btn-back">
+                                Xem máy khác
+                            </a>
                         </div>
-
-                        <button type="submit" class="btn-buy-detail">
-                            🛒 MUA NGAY
-                        </button>
-
-                        <a href="/Product" class="btn-back">
-                            Xem máy khác
-                        </a>
-                    </form>
+                        <div class="mt-2 small text-warning opacity-75">
+                            <i class="bi bi-info-circle me-1"></i> Bạn cần đăng nhập tài khoản BMDTStore để tiếp tục đặt hàng.
+                        </div>
+                    }
                 </div>
             </div>
         </div>

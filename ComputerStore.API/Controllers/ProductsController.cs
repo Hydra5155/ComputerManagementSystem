@@ -1,7 +1,7 @@
-﻿using ComputerStore.Core.Entities;
-using ComputerStore.Infrastructure.Data;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ComputerStore.Core.Entities;
+using ComputerStore.Infrastructure.Data;
 
 namespace ComputerStore.API.Controllers
 {
@@ -16,74 +16,112 @@ namespace ComputerStore.API.Controllers
             _context = context;
         }
 
-        // Lấy danh sách sản phẩm (hỗ trợ tìm kiếm theo tên và lọc theo danh mục)
+        // GET: api/products (Bộ lọc đa điều kiện chặt chẽ)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts([FromQuery] string? search, [FromQuery] int? categoryId)
+        public async Task<IActionResult> GetProducts(
+            [FromQuery] string? query,
+            [FromQuery] int? categoryId,
+            [FromQuery] string? brand,
+            [FromQuery] decimal? minPrice,
+            [FromQuery] decimal? maxPrice,
+            [FromQuery] string? sortBy)
         {
-            var query = _context.Products.Include(p => p.Category).AsQueryable();
+            var q = _context.Products.Include(p => p.Category).AsNoTracking().AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(search))
+            // 1. Ràng buộc từ khóa (tìm cả trong tên, mô tả và cấu hình)
+            if (!string.IsNullOrWhiteSpace(query))
             {
-                query = query.Where(p => p.Name.Contains(search));
+                var keyword = query.Trim().ToLower();
+                q = q.Where(p => p.Name.ToLower().Contains(keyword) ||
+                                (p.Specifications != null && p.Specifications.ToLower().Contains(keyword)));
             }
 
-            if (categoryId.HasValue && categoryId > 0)
+            // 2. Ràng buộc Danh mục
+            if (categoryId.HasValue && categoryId.Value > 0)
             {
-                query = query.Where(p => p.CategoryId == categoryId.Value);
+                q = q.Where(p => p.CategoryId == categoryId.Value);
             }
 
-            return await query.ToListAsync();
+            // 3. Ràng buộc Thương hiệu (Brand)
+            if (!string.IsNullOrWhiteSpace(brand))
+            {
+                var brandTerm = brand.Trim().ToLower();
+                q = q.Where(p => p.Name.ToLower().Contains(brandTerm));
+            }
+
+            // 4. Ràng buộc chặt chẽ khoảng giá
+            if (minPrice.HasValue && minPrice.Value < 0) minPrice = 0;
+            if (maxPrice.HasValue && maxPrice.Value < 0) maxPrice = 0;
+
+            if (minPrice.HasValue && maxPrice.HasValue && minPrice.Value > maxPrice.Value)
+            {
+                // Nếu người dùng nhập min > max -> tự động hoán đổi để không bị rỗng kết quả
+                var temp = minPrice;
+                minPrice = maxPrice;
+                maxPrice = temp;
+            }
+
+            if (minPrice.HasValue && minPrice.Value > 0)
+            {
+                q = q.Where(p => p.Price >= minPrice.Value);
+            }
+
+            if (maxPrice.HasValue && maxPrice.Value > 0)
+            {
+                q = q.Where(p => p.Price <= maxPrice.Value);
+            }
+
+            // 5. Sắp xếp
+            q = sortBy switch
+            {
+                "price_asc" => q.OrderBy(p => p.Price),
+                "price_desc" => q.OrderByDescending(p => p.Price),
+                "name_asc" => q.OrderBy(p => p.Name),
+                _ => q.OrderByDescending(p => p.ProductId)
+            };
+
+            var list = await q.ToListAsync();
+            return Ok(list);
         }
 
-        // Lấy chi tiết một sản phẩm
+        // GET: api/products/suggest?term=... (Tăng lên 15 sản phẩm để cuộn mượt mà)
+        [HttpGet("suggest")]
+        public async Task<IActionResult> Suggest([FromQuery] string? term)
+        {
+            if (string.IsNullOrWhiteSpace(term) || term.Trim().Length < 1)
+            {
+                return Ok(new List<object>());
+            }
+
+            var keyword = term.Trim().ToLower();
+            var suggestions = await _context.Products
+                .AsNoTracking()
+                .Where(p => p.Name.ToLower().Contains(keyword) ||
+                           (p.Specifications != null && p.Specifications.ToLower().Contains(keyword)))
+                .Take(15) // Tăng từ 6 lên 15 sản phẩm để cuộn thoải mái
+                .Select(p => new
+                {
+                    p.ProductId,
+                    p.Name,
+                    p.Price,
+                    p.ImageUrl
+                })
+                .ToListAsync();
+
+            return Ok(suggestions);
+        }
+
+        // GET: api/products/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        public async Task<IActionResult> GetProduct(int id)
         {
-            var product = await _context.Products.Include(p => p.Category)
-                                                .FirstOrDefaultAsync(p => p.ProductId == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-            return product;
-        }
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProductId == id);
 
-        // Thêm sản phẩm mới (dùng cho WinForms Admin)
-        [HttpPost]
-        public async Task<ActionResult<Product>> CreateProduct(Product product)
-        {
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetProduct), new { id = product.ProductId }, product);
-        }
-
-        // Cập nhật thông tin sản phẩm
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProduct(int id, Product product)
-        {
-            if (id != product.ProductId)
-            {
-                return BadRequest("ID không khớp.");
-            }
-
-            _context.Entry(product).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
-
-        // Xóa sản phẩm
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
-        {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-            return NoContent();
+            if (product == null) return NotFound();
+            return Ok(product);
         }
     }
 }

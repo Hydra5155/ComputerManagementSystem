@@ -45,3 +45,4 @@ D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\Compute
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Admin\obj\Debug\net9.0-windows\ComputerStore.Admin.pdb
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Admin\obj\Debug\net9.0-windows\ComputerStore.Admin.genruntimeconfig.cache
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Admin\obj\Debug\net9.0-windows\ref\ComputerStore.Admin.dll
+D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Admin\obj\Debug\net9.0-windows\ComputerStore.Admin.sourcelink.json

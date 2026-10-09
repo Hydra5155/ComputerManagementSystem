@@ -1,4 +1,6 @@
-﻿namespace ComputerStore.Core.Entities
+﻿using System.Collections.Generic;
+
+namespace ComputerStore.Core.Entities
 {
     public class Product
     {
@@ -7,7 +9,7 @@
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
         public string? ImageUrl { get; set; }
-        public string? Specifications { get; set; } // CPU, RAM, Ổ cứng, Card màn hình...
+        public string? Specifications { get; set; }
 
         public int CategoryId { get; set; }
         public Category? Category { get; set; }

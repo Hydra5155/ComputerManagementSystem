@@ -18,7 +18,7 @@ namespace ComputerStore.Web.Controllers
 
     public class CartController : Controller
     {
-        private const string CartSessionKey = "DTB_CartSession_v3";
+        private const string CartSessionKey = "BMDT_CartSession_v1";
         private readonly IHttpClientFactory _httpClientFactory;
 
         public CartController(IHttpClientFactory httpClientFactory)
@@ -75,19 +75,28 @@ namespace ComputerStore.Web.Controllers
             return View(cartItems);
         }
 
-        // THÊM SẢN PHẨM VÀO GIỎ HÀNG
+        // THÊM SẢN PHẨM VÀO GIỎ HÀNG (YÊU CẦU BẮT BUỘC ĐĂNG NHẬP)
         [HttpPost]
         [HttpGet]
-        public async Task<IActionResult> AddToCart(int? productId, int? id, string? productName, decimal? price, string? imageUrl, int quantity = 1)
+        public async Task<IActionResult> AddToCart(int? productId, int? id, string? productName, decimal? price, string? imageUrl, int quantity = 1, string? returnUrl = null)
         {
             int targetId = productId ?? id ?? 0;
             if (targetId <= 0) return RedirectToAction("Index", "Product");
 
+            // 1. KIỂM TRA ĐĂNG NHẬP QUA SESSION
+            var userJson = HttpContext.Session.GetString(AccountController.UserSessionKey);
+            if (string.IsNullOrEmpty(userJson))
+            {
+                TempData["ErrorMessage"] = "Bạn cần đăng nhập tài khoản BMDTStore để có thể mua sản phẩm.";
+                var redirectUrl = !string.IsNullOrEmpty(returnUrl) ? returnUrl : $"/Product/Detail/{targetId}";
+                return RedirectToAction("Login", "Account", new { returnUrl = redirectUrl });
+            }
+
+            // 2. XỬ LÝ LẤY DỮ LIỆU SẢN PHẨM
             decimal finalPrice = price ?? 0m;
             string finalName = productName ?? "";
             string finalImg = imageUrl ?? "";
 
-            // Nếu thiếu tên hoặc giá, gọi API để lấy dữ liệu thực tế của sản phẩm
             if (finalPrice <= 0 || string.IsNullOrWhiteSpace(finalName))
             {
                 try
@@ -115,6 +124,7 @@ namespace ComputerStore.Web.Controllers
 
             if (string.IsNullOrWhiteSpace(finalName)) finalName = "Laptop Gaming";
 
+            // 3. LƯU VÀO GIỎ HÀNG
             var dtoList = GetDtoList();
             var item = dtoList.FirstOrDefault(x => x.ProductId == targetId);
 
@@ -191,10 +201,17 @@ namespace ComputerStore.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Cart/Checkout - Trang thanh toán
+        // GET: /Cart/Checkout - Trang thanh toán (Yêu cầu đăng nhập)
         [HttpGet]
         public IActionResult Checkout()
         {
+            var userJson = HttpContext.Session.GetString(AccountController.UserSessionKey);
+            if (string.IsNullOrEmpty(userJson))
+            {
+                TempData["ErrorMessage"] = "Vui lòng đăng nhập để tiến hành đặt hàng.";
+                return RedirectToAction("Login", "Account", new { returnUrl = "/Cart/Checkout" });
+            }
+
             var dtoList = GetDtoList();
             if (!dtoList.Any()) return RedirectToAction(nameof(Index));
 
@@ -202,10 +219,17 @@ namespace ComputerStore.Web.Controllers
             return View(cartItems);
         }
 
-        // POST: /Cart/Checkout - LƯU ĐƠN VÀO HỆ THỐNG / DATABASE QUA WEB API
+        // POST: /Cart/Checkout - LƯU ĐƠN VÀO DATABASE QUA WEB API
         [HttpPost]
         public async Task<IActionResult> Checkout(string customerName, string customerPhone, string shippingAddress)
         {
+            var userJson = HttpContext.Session.GetString(AccountController.UserSessionKey);
+            if (string.IsNullOrEmpty(userJson))
+            {
+                TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                return RedirectToAction("Login", "Account", new { returnUrl = "/Cart/Checkout" });
+            }
+
             var dtoList = GetDtoList();
             if (!dtoList.Any())
             {
@@ -216,7 +240,7 @@ namespace ComputerStore.Web.Controllers
             {
                 var client = _httpClientFactory.CreateClient("StoreAPI");
 
-                // Đóng gói Payload theo Entity Order và OrderDetail
+                // Đóng gói Payload đơn hàng
                 var orderPayload = new
                 {
                     CustomerName = string.IsNullOrWhiteSpace(customerName) ? "Khách hàng" : customerName.Trim(),
@@ -249,11 +273,10 @@ namespace ComputerStore.Web.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    // Fallback thử endpoint phụ nếu API dùng quy ước khác
                     await client.PostAsync("Orders/create", jsonContent);
                 }
 
-                // Xóa session giỏ hàng sau khi đặt thành công
+                // Xóa giỏ hàng sau khi đặt thành công
                 HttpContext.Session.Remove(CartSessionKey);
                 TempData["SuccessMessage"] = "Đặt hàng thành công!";
                 return RedirectToAction(nameof(OrderSuccess));
@@ -273,7 +296,7 @@ namespace ComputerStore.Web.Controllers
             return View();
         }
 
-        // --- HÀM PHỤ TRỢ NỘI BỘ ---
+        // --- CÁC HÀM PHỤ TRỢ NỘI BỘ ---
         private List<CartDtoItem> GetDtoList()
         {
             var json = HttpContext.Session.GetString(CartSessionKey);

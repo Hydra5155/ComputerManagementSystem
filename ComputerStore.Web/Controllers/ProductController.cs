@@ -1,6 +1,6 @@
-﻿using ComputerStore.Core.Entities;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using ComputerStore.Core.Entities;
 
 namespace ComputerStore.Web.Controllers
 {
@@ -13,117 +13,124 @@ namespace ComputerStore.Web.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
-        // GET: /Product?search=...&priceRange=under15
         [HttpGet]
-        public async Task<IActionResult> Index(string? search, string? priceRange)
+        public async Task<IActionResult> Index(
+            string? query,
+            int? categoryId,
+            string? brand,
+            decimal? minPrice,
+            decimal? maxPrice,
+            string? sortBy,
+            int page = 1)
         {
-            List<Product> products = new();
+            var client = _httpClientFactory.CreateClient("StoreAPI");
+            var allProducts = new List<Product>();
+
+            // Ràng buộc khoảng giá hợp lệ
+            if (minPrice.HasValue && minPrice.Value < 0) minPrice = 0;
+            if (maxPrice.HasValue && maxPrice.Value < 0) maxPrice = 0;
+            if (minPrice.HasValue && maxPrice.HasValue && minPrice > maxPrice)
+            {
+                var temp = minPrice;
+                minPrice = maxPrice;
+                maxPrice = temp;
+            }
+
+            ViewBag.CurrentQuery = query;
+            ViewBag.CurrentCategory = categoryId;
+            ViewBag.CurrentBrand = brand;
+            ViewBag.CurrentMinPrice = minPrice;
+            ViewBag.CurrentMaxPrice = maxPrice;
+            ViewBag.CurrentSortBy = sortBy;
+
             try
             {
-                var client = _httpClientFactory.CreateClient("StoreAPI");
-                string url = "products";
-                if (!string.IsNullOrWhiteSpace(search))
-                {
-                    url += $"?search={Uri.EscapeDataString(search.Trim())}";
-                }
+                var encodedQuery = Uri.EscapeDataString(query ?? "");
+                var encodedBrand = Uri.EscapeDataString(brand ?? "");
+                var url = $"products?query={encodedQuery}&categoryId={categoryId}&brand={encodedBrand}&minPrice={minPrice}&maxPrice={maxPrice}&sortBy={sortBy}";
 
                 var response = await client.GetAsync(url);
                 if (response.IsSuccessStatusCode)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[DEBUG API RESPONSE]: {json}");
-
-                    products = JsonSerializer.Deserialize<List<Product>>(json, new JsonSerializerOptions
+                    var content = await response.Content.ReadAsStringAsync();
+                    allProducts = JsonSerializer.Deserialize<List<Product>>(content, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     }) ?? new List<Product>();
                 }
-                else
-                {
-                    var errorBody = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[DEBUG API ERROR]: Status={(int)response.StatusCode} {response.StatusCode}, Body={errorBody}");
-                    ViewBag.Error = $"API trả về mã lỗi {(int)response.StatusCode}: {errorBody}";
-                }
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"[DEBUG CALL EXCEPTION]: {ex}");
-                ViewBag.Error = $"Lỗi kết nối API: {ex.Message}";
             }
 
-            if (!string.IsNullOrEmpty(priceRange))
-            {
-                switch (priceRange)
-                {
-                    case "under15":
-                        products = products.Where(p => p.Price < 15000000).ToList();
-                        break;
-                    case "15to25":
-                        products = products.Where(p => p.Price >= 15000000 && p.Price <= 25000000).ToList();
-                        break;
-                    case "above25":
-                        products = products.Where(p => p.Price > 25000000).ToList();
-                        break;
-                }
-            }
+            // Phân trang: 8 sản phẩm mỗi trang
+            int pageSize = 8;
+            int totalItems = allProducts.Count;
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
-            ViewBag.CurrentSearch = search;
-            ViewBag.CurrentPriceRange = priceRange;
+            if (page < 1) page = 1;
+            if (page > totalPages && totalPages > 0) page = totalPages;
 
-            return View(products);
+            var pagedProducts = allProducts
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
+
+            return View(pagedProducts);
         }
 
-        // GET: /Product/Detail/{id}
-        [HttpGet("Product/Detail/{id}")]
-        public async Task<IActionResult> Detail(int id)
+        [HttpGet]
+        public async Task<IActionResult> Suggest(string term)
         {
-            Product? product = null;
+            var client = _httpClientFactory.CreateClient("StoreAPI");
             try
             {
-                var client = _httpClientFactory.CreateClient("StoreAPI");
+                var response = await client.GetAsync($"products/suggest?term={Uri.EscapeDataString(term ?? "")}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    return Content(content, "application/json");
+                }
+            }
+            catch
+            {
+            }
+            return Json(new object[] { });
+        }
 
-                // Gọi endpoint lấy chi tiết sản phẩm
+        [HttpGet]
+        public async Task<IActionResult> Details(int id) => await Detail(id);
+
+        [HttpGet]
+        [ActionName("Detail")]
+        public async Task<IActionResult> Detail(int id)
+        {
+            var client = _httpClientFactory.CreateClient("StoreAPI");
+            Product? product = null;
+
+            try
+            {
                 var response = await client.GetAsync($"products/{id}");
                 if (response.IsSuccessStatusCode)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    product = JsonSerializer.Deserialize<Product>(json, new JsonSerializerOptions
+                    var content = await response.Content.ReadAsStringAsync();
+                    product = JsonSerializer.Deserialize<Product>(content, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
                 }
-                else
-                {
-                    // Fallback lấy toàn bộ danh sách để tìm nếu endpoint /products/{id} chưa hỗ trợ
-                    var listResponse = await client.GetAsync("products");
-                    if (listResponse.IsSuccessStatusCode)
-                    {
-                        var json = await listResponse.Content.ReadAsStringAsync();
-                        var allProducts = JsonSerializer.Deserialize<List<Product>>(json, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        }) ?? new List<Product>();
-
-                        product = allProducts.FirstOrDefault(p =>
-                        {
-                            var pIdProp = p.GetType().GetProperty("ProductId") ?? p.GetType().GetProperty("Id");
-                            return pIdProp != null && Convert.ToInt32(pIdProp.GetValue(p)) == id;
-                        });
-                    }
-                }
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"[DEBUG DETAIL EXCEPTION]: {ex}");
-                ViewBag.Error = $"Lỗi kết nối: {ex.Message}";
             }
 
-            if (product == null)
-            {
-                return RedirectToAction(nameof(Index));
-            }
+            if (product == null) return NotFound();
 
-            return View(product);
+            return View("~/Views/Product/Detail.cshtml", product);
         }
     }
 }

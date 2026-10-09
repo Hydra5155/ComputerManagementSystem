@@ -331,3 +331,4 @@ D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\Compute
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.API\obj\Debug\net9.0\ComputerStore.API.pdb
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.API\obj\Debug\net9.0\ComputerStore.API.genruntimeconfig.cache
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.API\obj\Debug\net9.0\ref\ComputerStore.API.dll
+D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.API\obj\Debug\net9.0\ComputerStore.API.sourcelink.json

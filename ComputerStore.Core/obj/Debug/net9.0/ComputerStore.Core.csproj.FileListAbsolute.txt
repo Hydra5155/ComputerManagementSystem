@@ -20,3 +20,4 @@ D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\Compute
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Core\obj\Debug\net9.0\refint\ComputerStore.Core.dll
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Core\obj\Debug\net9.0\ComputerStore.Core.pdb
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Core\obj\Debug\net9.0\ref\ComputerStore.Core.dll
+D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Core\obj\Debug\net9.0\ComputerStore.Core.sourcelink.json

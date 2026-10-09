@@ -32,3 +32,4 @@ D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\Compute
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Infrastructure\obj\Debug\net9.0\ComputerStore.Infrastructure.pdb
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Infrastructure\obj\Debug\net9.0\ComputerStore.Infrastructure.genruntimeconfig.cache
 D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Infrastructure\obj\Debug\net9.0\ref\ComputerStore.Infrastructure.dll
+D:\LCB\LCB_C#_DoAn_Demo\ComputerManagementSystem\ComputerStoreSystem.sln\ComputerStore.Infrastructure\obj\Debug\net9.0\ComputerStore.Infrastructure.sourcelink.json
