@@ -1,9 +1,7 @@
-name: .NET Build & Deploy to Render
+name: .NET Build & Deploy
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
     branches: [ "master" ]
   workflow_dispatch:
 
@@ -20,16 +18,11 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Restore dependencies
-      run: dotnet restore ComputerStoreSystem.sln
+    - name: Restore Web Project
+      run: dotnet restore ComputerStore.Web/ComputerStore.Web.csproj
 
-    - name: Build solution
-      run: dotnet build ComputerStoreSystem.sln --configuration Release --no-restore
+    - name: Build Web Project
+      run: dotnet build ComputerStore.Web/ComputerStore.Web.csproj --configuration Release --no-restore -p:EnableWindowsTargeting=true
 
-    # Tự động gọi Deploy Hook của Render (nếu có cấu hình Secret)
-    - name: Deploy to Render
-      if: success() && github.ref == 'refs/heads/master' && env.RENDER_DEPLOY_HOOK != ''
-      env:
-        RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-      run: |
-        curl -X POST "$RENDER_DEPLOY_HOOK"
+    - name: Publish Web Project
+      run: dotnet publish ComputerStore.Web/ComputerStore.Web.csproj -c Release -o ./publish -p:UseAppHost=false
