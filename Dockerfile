@@ -1,23 +1,22 @@
-﻿# 1. Base SDK để biên dịch
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# 1. Dùng đúng SDK 9.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Sao chép toàn bộ mã nguồn vào container
+# Sao chép mã nguồn
 COPY . .
 
-# Khôi phục dependencies
-RUN dotnet restore
+# Chỉ restore riêng project Web (kèm theo các project core phụ thuộc)
+RUN dotnet restore "ComputerStore.Web/ComputerStore.Web.csproj"
 
-# Biên dịch ra thư mục publish
+# Build và Publish ra thư mục publish
 WORKDIR "/src/ComputerStore.Web"
 RUN dotnet publish "ComputerStore.Web.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# 2. Runtime môi trường chạy sản phẩm
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+# 2. Dùng Runtime ASP.NET 9.0
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# Cấu hình cổng cho Render (Render dùng cổng 10000 mặc định)
 ENV ASPNETCORE_URLS=http://+:10000
 EXPOSE 10000
 
