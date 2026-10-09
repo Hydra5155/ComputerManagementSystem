@@ -1,0 +1,35 @@
+name: .NET Build & Deploy to Render
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore ComputerStoreSystem.sln
+
+    - name: Build solution
+      run: dotnet build ComputerStoreSystem.sln --configuration Release --no-restore
+
+    # Tự động gọi Deploy Hook của Render (nếu có cấu hình Secret)
+    - name: Deploy to Render
+      if: success() && github.ref == 'refs/heads/master' && env.RENDER_DEPLOY_HOOK != ''
+      env:
+        RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+      run: |
+        curl -X POST "$RENDER_DEPLOY_HOOK"
