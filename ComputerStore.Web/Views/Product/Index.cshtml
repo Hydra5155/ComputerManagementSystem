@@ -1,0 +1,373 @@
+﻿@model IEnumerable<ComputerStore.Core.Entities.Product>
+@{
+    ViewData["Title"] = "DTBStore - Hardware Ecosystem";
+}
+
+<style>
+    body {
+        background-color: #080c0d !important;
+        color: #ffffff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .search-box-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 25px;
+    }
+
+    .search-input {
+        background-color: #0e1516;
+        border: 1px solid #1e453e;
+        color: #ffffff;
+        border-radius: 6px 0 0 6px;
+        padding: 10px 16px;
+        width: 100%;
+        max-width: 500px;
+        outline: none;
+    }
+
+        .search-input:focus {
+            border-color: #5df2d6;
+            box-shadow: 0 0 8px rgba(93, 242, 214, 0.4);
+        }
+
+    .search-btn {
+        background-color: #143d35;
+        border: 1px solid #1e453e;
+        border-left: none;
+        color: #5df2d6;
+        border-radius: 0 6px 6px 0;
+        padding: 0 20px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .search-btn:hover {
+            background-color: #00796b;
+            color: #ffffff;
+        }
+
+    .filter-card {
+        background-color: #0e1516;
+        border: 1px solid #1e453e;
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .filter-title {
+        color: #5df2d6;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+    }
+
+    .filter-option {
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13.5px;
+        color: #c7d2d2;
+        cursor: pointer;
+    }
+
+        .filter-option input[type="radio"] {
+            accent-color: #5df2d6;
+        }
+
+    .btn-filter-apply {
+        background: linear-gradient(135deg, #00796b, #004d40);
+        border: 1px solid #5df2d6;
+        color: #ffffff;
+        font-weight: 700;
+        padding: 8px 0;
+        width: 100%;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: 0.2s;
+    }
+
+        .btn-filter-apply:hover {
+            background: #5df2d6;
+            color: #080c0d;
+            box-shadow: 0 0 12px rgba(93, 242, 214, 0.5);
+        }
+
+    .product-card {
+        background-color: #0e1516;
+        border: 1px solid #1e453e;
+        border-radius: 10px;
+        padding: 14px;
+        transition: all 0.25s ease;
+        position: relative;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+    }
+
+        .product-card:hover {
+            border-color: #5df2d6;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(93, 242, 214, 0.25);
+        }
+
+    .badge-category {
+        background-color: transparent;
+        border: 1px solid #206153;
+        color: #5df2d6;
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 4px;
+    }
+
+    .badge-stock {
+        background-color: rgba(52, 211, 153, 0.15);
+        color: #34d399;
+        border: 1px solid #34d399;
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .badge-out-stock {
+        background-color: rgba(248, 113, 113, 0.15);
+        color: #f87171;
+        border: 1px solid #f87171;
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .product-img-wrap {
+        background-color: #080c0d;
+        border-radius: 6px;
+        height: 170px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 10px 0;
+        overflow: hidden;
+    }
+
+        .product-img-wrap img {
+            max-height: 155px;
+            max-width: 90%;
+            object-fit: contain;
+        }
+
+    .product-name {
+        font-weight: 700;
+        font-size: 15px;
+        color: #ffffff;
+        margin-bottom: 6px;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .product-specs {
+        font-size: 12px;
+        color: #8da4a4;
+        line-height: 1.45;
+        margin-bottom: 12px;
+        height: 52px;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .product-price {
+        font-size: 18px;
+        font-weight: 800;
+        color: #5df2d6;
+        margin-bottom: 12px;
+    }
+
+    .btn-action {
+        border-radius: 6px;
+        padding: 9px 0;
+        width: 100%;
+        text-align: center;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        transition: 0.2s;
+        border: 1px solid #5df2d6;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-buy {
+        background: linear-gradient(135deg, #00796b, #004d40);
+        color: #ffffff;
+    }
+
+        .btn-buy:hover {
+            background: #5df2d6;
+            color: #080c0d;
+            box-shadow: 0 0 10px rgba(93, 242, 214, 0.4);
+        }
+
+    .btn-view {
+        background: #143d35;
+        color: #5df2d6;
+    }
+
+        .btn-view:hover {
+            background: #00796b;
+            color: #ffffff;
+        }
+</style>
+
+<div class="container-fluid px-4 py-3">
+    <!-- Thanh tìm kiếm -->
+    <div class="search-box-container">
+        <form method="get" class="d-flex w-100 justify-content-center">
+            <input type="text" name="search" class="search-input" value="@ViewBag.CurrentSearch" placeholder="Tìm máy tính, RTX, Core i7, RAM 16GB..." />
+            <button type="submit" class="search-btn">🔍</button>
+        </form>
+    </div>
+
+    <div class="row">
+        <!-- Bộ lọc ngân sách -->
+        <div class="col-lg-3 col-md-4 mb-4">
+            <div class="filter-card">
+                <div class="filter-title">⚡ BỘ LỌC NGÂN SÁCH</div>
+                <form method="get">
+                    <label class="filter-option">
+                        <input type="radio" name="priceRange" value="" checked /> Tất cả mức giá
+                    </label>
+                    <label class="filter-option">
+                        <input type="radio" name="priceRange" value="under15" /> Dưới 15.000.000 đ
+                    </label>
+                    <label class="filter-option">
+                        <input type="radio" name="priceRange" value="15to25" /> 15 - 25 triệu đ
+                    </label>
+                    <label class="filter-option">
+                        <input type="radio" name="priceRange" value="above25" /> Trên 25.000.000 đ
+                    </label>
+                    <button type="submit" class="btn-filter-apply">ÁP DỤNG</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Danh sách máy tính -->
+        <div class="col-lg-9 col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div style="font-size: 14px; color: #8da4a4;">
+                    HỆ THỐNG GHI NHẬN: <b style="color: #5df2d6;">@(Model?.Count() ?? 0) MẪU SẴN SÀNG</b>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                @if (Model != null)
+                {
+                    @foreach (var item in Model)
+                    {
+                        var itemType = item.GetType();
+
+                        // 1. Quét thông số cấu hình an toàn
+                        var specProp = itemType.GetProperty("Description")
+                        ?? itemType.GetProperty("Specifications")
+                        ?? itemType.GetProperty("Specs")
+                        ?? itemType.GetProperty("Detail");
+                        var descVal = specProp != null ? (specProp.GetValue(item)?.ToString() ?? "") : "";
+
+                        // 2. Quét trường ảnh an toàn
+                        var imgProp = itemType.GetProperty("ImageUrl")
+                        ?? itemType.GetProperty("Image")
+                        ?? itemType.GetProperty("Thumbnail")
+                        ?? itemType.GetProperty("Picture")
+                        ?? itemType.GetProperty("Photo");
+                        var rawImg = imgProp != null ? (imgProp.GetValue(item)?.ToString() ?? "") : "";
+
+                        string finalImg = "";
+                        if (string.IsNullOrWhiteSpace(rawImg))
+                        {
+                            finalImg = "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=500&q=80";
+                        }
+                        else if (rawImg.StartsWith("http://") || rawImg.StartsWith("https://") || rawImg.StartsWith("/"))
+                        {
+                            finalImg = rawImg;
+                        }
+                        else
+                        {
+                            finalImg = "/" + rawImg;
+                        }
+
+                        var nameVal = item.Name ?? "";
+                        var priceVal = string.Format("{0:N0} đ", item.Price);
+                        var stockVal = item.StockQuantity;
+                        var idVal = item.ProductId;
+
+                        <div class="col-xl-4 col-md-6">
+                            <!-- Bấm vào thẻ để chuyển trang chi tiết -->
+                            <div class="product-card"
+                                 title="Bấm để xem chi tiết sản phẩm"
+                                 onclick="location.href='@Url.Action("Detail", "Product", new { id = idVal })'">
+
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge-category">Laptop Gaming</span>
+                                        @if (stockVal > 0)
+                                        {
+                                            <span class="badge-stock">CÒN HÀNG</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-out-stock">HẾT HÀNG</span>
+                                        }
+                                    </div>
+
+                                    <div class="product-img-wrap">
+                                        <img src="@finalImg"
+                                             alt="@nameVal"
+                                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=500&q=80';" />
+                                    </div>
+
+                                    <div class="product-name" title="@nameVal">@nameVal</div>
+                                    <div class="product-specs">⚙️ @descVal</div>
+                                </div>
+
+                                <div>
+                                    <div class="product-price">@priceVal</div>
+
+                                    <div class="d-flex gap-2">
+                                        <!-- Form MUA NGAY: Truyền đầy đủ ID, Tên, Giá, Ảnh -->
+                                        <form asp-controller="Cart" asp-action="AddToCart" method="post" style="flex: 2; margin: 0;" onclick="event.stopPropagation();">
+                                            <input type="hidden" name="productId" value="@idVal" />
+                                            <input type="hidden" name="productName" value="@nameVal" />
+                                            <input type="hidden" name="price" value="@item.Price" />
+                                            <input type="hidden" name="imageUrl" value="@finalImg" />
+                                            <input type="hidden" name="quantity" value="1" />
+                                            <button type="submit" class="btn-action btn-buy">
+                                                🛒 MUA NGAY
+                                            </button>
+                                        </form>
+
+                                        <!-- Nút Chi Tiết -->
+                                        <a href="@Url.Action("Detail", "Product", new { id = idVal })"
+                                           class="btn-action btn-view"
+                                           style="flex: 1;"
+                                           onclick="event.stopPropagation();">
+                                            🔍 Xem
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

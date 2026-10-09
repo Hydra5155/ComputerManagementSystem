@@ -1,0 +1,176 @@
+﻿@model IEnumerable<ComputerStore.Web.Models.CartItem>
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@{
+    ViewData["Title"] = "Thanh toán đơn hàng - DTBStore";
+
+    // Tự động đọc dữ liệu khách hàng từ Session để điền sẵn
+    var userJson = HttpContextAccessor.HttpContext?.Session.GetString(ComputerStore.Web.Controllers.AccountController.UserSessionKey);
+    var customer = !string.IsNullOrEmpty(userJson)
+        ? System.Text.Json.JsonSerializer.Deserialize<ComputerStore.Web.Models.ProfileViewModel>(userJson)
+        : null;
+
+    Func<object, string, object?> getProp = (obj, propName) =>
+    {
+        if (obj == null) return null;
+        var p = obj.GetType().GetProperty(propName);
+        if (p != null) return p.GetValue(obj);
+
+        var productProp = obj.GetType().GetProperty("Product");
+        if (productProp != null)
+        {
+            var productObj = productProp.GetValue(obj);
+            if (productObj != null)
+            {
+                return productObj.GetType().GetProperty(propName)?.GetValue(productObj);
+            }
+        }
+        return null;
+    };
+
+    decimal total = 0;
+    if (Model != null)
+    {
+        foreach (var x in Model)
+        {
+            var pVal = getProp(x, "Price") ?? getProp(x, "UnitPrice");
+            var qVal = getProp(x, "Quantity");
+            decimal price = pVal != null ? Convert.ToDecimal(pVal) : 0m;
+            int qty = qVal != null ? Convert.ToInt32(qVal) : 1;
+            total += (price * qty);
+        }
+    }
+}
+
+<style>
+    body {
+        background-color: #080c0d !important;
+        color: #ffffff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .checkout-card {
+        background-color: #0e1516;
+        border: 1px solid #1e453e;
+        border-radius: 12px;
+        padding: 24px;
+    }
+
+    .form-control-cyber {
+        background-color: #141f21;
+        border: 1px solid #1e453e;
+        color: #ffffff;
+        border-radius: 6px;
+        padding: 10px 14px;
+        width: 100%;
+        margin-bottom: 15px;
+        outline: none;
+    }
+
+        .form-control-cyber:focus {
+            border-color: #5df2d6;
+            box-shadow: 0 0 8px rgba(93, 242, 214, 0.4);
+        }
+
+    .btn-submit-order {
+        background: linear-gradient(135deg, #00796b, #004d40);
+        border: 1px solid #5df2d6;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: 0.2s;
+    }
+
+        .btn-submit-order:hover {
+            background: #5df2d6;
+            color: #080c0d;
+            box-shadow: 0 0 12px rgba(93, 242, 214, 0.4);
+        }
+</style>
+
+<div class="container py-4">
+    <a href="/Cart" style="color: #5df2d6; text-decoration: none; font-weight: 600; margin-bottom: 20px; display: inline-block;">
+        ← Quay lại giỏ hàng
+    </a>
+
+    <h2 style="color: #5df2d6; font-weight: 800; margin-bottom: 25px;">⚡ XÁC NHẬN THANH TOÁN & ĐẶT HÀNG</h2>
+
+    <form asp-controller="Cart" asp-action="Checkout" method="post">
+        <div class="row">
+            <!-- Cột thông tin giao hàng -->
+            <div class="col-lg-7 mb-4">
+                <div class="checkout-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 style="color: #5df2d6; font-weight: 700; margin: 0;">Thông tin nhận hàng</h4>
+                        @if (customer != null)
+                        {
+                            <span style="font-size: 12px; color: #34d399; border: 1px solid #34d399; padding: 2px 8px; border-radius: 4px;">
+                                Đã nạp từ tài khoản: @customer.FullName
+                            </span>
+                        }
+                        else
+                        {
+                            <a href="/Account/Login?returnUrl=/Cart/Checkout" style="font-size: 13px; color: #5df2d6; text-decoration: none;">
+                                🔑 Đăng nhập để tự điền
+                            </a>
+                        }
+                    </div>
+
+                    <label style="color: #8da4a4; font-size: 13px; margin-bottom: 4px;">Họ và tên người nhận</label>
+                    <input type="text" name="customerName" class="form-control-cyber" value="@(customer?.FullName ?? "")" placeholder="Nguyễn Văn A" required />
+
+                    <label style="color: #8da4a4; font-size: 13px; margin-bottom: 4px;">Số điện thoại</label>
+                    <input type="tel" name="customerPhone" class="form-control-cyber" value="@(customer?.PhoneNumber ?? "")" placeholder="0912 345 678" required />
+
+                    <label style="color: #8da4a4; font-size: 13px; margin-bottom: 4px;">Địa chỉ giao hàng</label>
+                    <textarea name="shippingAddress" class="form-control-cyber" rows="3" placeholder="Số nhà, tên đường, phường/xã, quận/huyện..." required>@(customer?.Address ?? "")</textarea>
+                </div>
+            </div>
+
+            <!-- Cột tóm tắt đơn hàng -->
+            <div class="col-lg-5">
+                <div class="checkout-card">
+                    <h4 style="color: #5df2d6; font-weight: 700; margin-bottom: 20px;">Tóm tắt đơn hàng</h4>
+
+                    @if (Model != null)
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var name = getProp(item, "ProductName")?.ToString()
+                            ?? getProp(item, "Name")?.ToString()
+                            ?? "Laptop Gaming";
+
+                            var priceObj = getProp(item, "Price") ?? getProp(item, "UnitPrice");
+                            var price = priceObj != null ? Convert.ToDecimal(priceObj) : 0m;
+
+                            var qtyObj = getProp(item, "Quantity");
+                            var qty = qtyObj != null ? Convert.ToInt32(qtyObj) : 1;
+
+                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom: 1px solid #142826;">
+                                <div>
+                                    <div style="font-weight: 600; color: #fff;">@name</div>
+                                    <small style="color: #8da4a4;">Số lượng: @qty</small>
+                                </div>
+                                <div style="color: #5df2d6; font-weight: 700;">@string.Format("{0:N0} đ", price * qty)</div>
+                            </div>
+                        }
+                    }
+
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 mb-4" style="border-top: 1px solid #1e453e;">
+                        <div style="font-size: 16px; color: #8da4a4;">Tổng cộng:</div>
+                        <div style="font-size: 22px; font-weight: 800; color: #facc15;">@string.Format("{0:N0} đ", total)</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-submit-order py-3">
+                            HOÀN TẤT ĐẶT HÀNG
+                        </button>
+                        <a href="/Cart" class="btn btn-outline-light py-2 opacity-75 text-center" style="font-size: 14px;">
+                            ← Quay lại chỉnh giỏ hàng
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

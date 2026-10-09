@@ -1,0 +1,248 @@
+﻿@model ComputerStore.Core.Entities.Product
+@{
+    ViewData["Title"] = (Model?.Name ?? "Chi tiết sản phẩm") + " - DTBStore";
+
+    // 1. Quét thông số / mô tả cấu hình an toàn
+    var itemType = Model?.GetType();
+    var specProp = itemType?.GetProperty("Description")
+                ?? itemType?.GetProperty("Specifications")
+                ?? itemType?.GetProperty("Specs")
+                ?? itemType?.GetProperty("Detail");
+    var specs = specProp != null ? (specProp.GetValue(Model)?.ToString() ?? "") : "";
+
+    // 2. Quét trường ảnh an toàn
+    var imgProp = itemType?.GetProperty("ImageUrl")
+               ?? itemType?.GetProperty("Image")
+               ?? itemType?.GetProperty("Thumbnail")
+               ?? itemType?.GetProperty("Picture")
+               ?? itemType?.GetProperty("Photo");
+    var rawImg = imgProp != null ? (imgProp.GetValue(Model)?.ToString() ?? "") : "";
+
+    string finalImg = "";
+    if (string.IsNullOrWhiteSpace(rawImg))
+    {
+        finalImg = "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=600&q=80";
+    }
+    else if (rawImg.StartsWith("http://") || rawImg.StartsWith("https://") || rawImg.StartsWith("/"))
+    {
+        finalImg = rawImg;
+    }
+    else
+    {
+        finalImg = "/" + rawImg;
+    }
+
+    var idVal = Model?.ProductId ?? 0;
+    var nameVal = Model?.Name ?? "Laptop Gaming";
+    var priceVal = Model?.Price ?? 0m;
+    var stockVal = Model?.StockQuantity ?? 0;
+}
+
+<style>
+    body {
+        background-color: #080c0d !important;
+        color: #ffffff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .detail-card {
+        background-color: #0e1516;
+        border: 1px solid #1e453e;
+        border-radius: 12px;
+        padding: 35px;
+        box-shadow: 0 0 30px rgba(93, 242, 214, 0.12);
+    }
+
+    .detail-img-box {
+        background-color: #080c0d;
+        border: 1px solid #1e453e;
+        border-radius: 10px;
+        padding: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 380px;
+    }
+
+        .detail-img-box img {
+            max-height: 320px;
+            max-width: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+            .detail-img-box img:hover {
+                transform: scale(1.04);
+            }
+
+    .badge-code {
+        background: transparent;
+        border: 1px solid #206153;
+        color: #5df2d6;
+        font-size: 12px;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .detail-title {
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 28px;
+        margin: 18px 0 12px 0;
+        line-height: 1.3;
+    }
+
+    .detail-price {
+        font-size: 32px;
+        font-weight: 800;
+        color: #5df2d6;
+        margin-bottom: 18px;
+        text-shadow: 0 0 15px rgba(93, 242, 214, 0.3);
+    }
+
+    .specs-box {
+        background: #141f21;
+        border: 1px solid #1e453e;
+        border-radius: 8px;
+        padding: 20px;
+        font-size: 14.5px;
+        line-height: 1.8;
+        color: #e2e8f0;
+        white-space: pre-line;
+        margin-bottom: 25px;
+    }
+
+    .qty-input-detail {
+        background-color: #141f21;
+        border: 1px solid #1e453e;
+        color: #ffffff;
+        border-radius: 6px;
+        padding: 10px;
+        width: 80px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 16px;
+        outline: none;
+    }
+
+        .qty-input-detail:focus {
+            border-color: #5df2d6;
+        }
+
+    .btn-buy-detail {
+        background: linear-gradient(135deg, #00796b, #004d40);
+        border: 1px solid #5df2d6;
+        color: #ffffff;
+        font-weight: 700;
+        padding: 12px 36px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 15px;
+        transition: 0.25s;
+    }
+
+        .btn-buy-detail:hover {
+            background: #5df2d6;
+            color: #080c0d;
+            box-shadow: 0 0 16px rgba(93, 242, 214, 0.5);
+        }
+
+    .btn-back {
+        background: #142022;
+        border: 1px solid #1e453e;
+        color: #8da4a4;
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: 0.2s;
+    }
+
+        .btn-back:hover {
+            color: #5df2d6;
+            border-color: #5df2d6;
+        }
+</style>
+
+<div class="container py-4">
+    <!-- Nút điều hướng quay lại -->
+    <a href="/Product" style="color: #5df2d6; text-decoration: none; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 25px;">
+        ← QUAY LẠI DANH SÁCH MÁY TÍNH
+    </a>
+
+    @if (Model != null)
+    {
+        <div class="detail-card">
+            <div class="row align-items-center">
+                <!-- Cột hình ảnh bên trái -->
+                <div class="col-lg-5 mb-4 mb-lg-0">
+                    <div class="detail-img-box">
+                        <img src="@finalImg"
+                             alt="@nameVal"
+                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=600&q=80';" />
+                    </div>
+                </div>
+
+                <!-- Cột thông tin chi tiết bên phải -->
+                <div class="col-lg-7 ps-lg-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge-code">MÃ MÁY: #@idVal</span>
+                        @if (stockVal > 0)
+                        {
+                            <span style="border: 1px solid #34d399; color: #34d399; font-size: 12px; padding: 4px 10px; border-radius: 4px; font-weight: 600;">
+                                CÒN HÀNG (@stockVal máy sẵn sàng)
+                            </span>
+                        }
+                        else
+                        {
+                            <span style="border: 1px solid #f87171; color: #f87171; font-size: 12px; padding: 4px 10px; border-radius: 4px; font-weight: 600;">
+                                TẠM HẾT HÀNG
+                            </span>
+                        }
+                    </div>
+
+                    <h1 class="detail-title">@nameVal</h1>
+
+                    <div class="detail-price">
+                        @string.Format("{0:N0} đ", priceVal)
+                    </div>
+
+                    <div>
+                        <div style="color: #5df2d6; font-weight: 700; font-size: 13.5px; margin-bottom: 8px; letter-spacing: 0.5px;">
+                            ⚙️ CẤU HÌNH & THÔNG SỐ KỸ THUẬT:
+                        </div>
+                        <div class="specs-box">
+                            @(string.IsNullOrWhiteSpace(specs) ? "Chưa có thông số chi tiết cho sản phẩm này." : specs)
+                        </div>
+                    </div>
+
+                    <!-- Form mua hàng: Truyền đủ dữ liệu để Giỏ hàng hiển thị chính xác tên và giá -->
+                    <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-flex align-items-center gap-3">
+                        <input type="hidden" name="productId" value="@idVal" />
+                        <input type="hidden" name="id" value="@idVal" />
+                        <input type="hidden" name="productName" value="@nameVal" />
+                        <input type="hidden" name="price" value="@priceVal" />
+                        <input type="hidden" name="imageUrl" value="@finalImg" />
+
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="color: #8da4a4; font-size: 14px;">Số lượng:</span>
+                            <input type="number" name="quantity" class="qty-input-detail" value="1" min="1" max="@(stockVal > 0 ? stockVal : 99)" />
+                        </div>
+
+                        <button type="submit" class="btn-buy-detail">
+                            🛒 MUA NGAY
+                        </button>
+
+                        <a href="/Product" class="btn-back">
+                            Xem máy khác
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>

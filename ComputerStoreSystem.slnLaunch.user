@@ -1,0 +1,19 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "ComputerStore.API\\ComputerStore.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "ComputerStore.Web\\ComputerStore.Web.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "ComputerStore.Admin\\ComputerStore.Admin.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
