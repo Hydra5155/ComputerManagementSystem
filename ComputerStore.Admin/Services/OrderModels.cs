@@ -15,8 +15,14 @@ namespace ComputerStore.Admin.Services
         public string Status { get; set; } = string.Empty;
         public List<OrderDetailDto> OrderDetails { get; set; } = new();
 
-        // Thuộc tính phụ trợ lấy địa chỉ
-        public string FinalAddress => !string.IsNullOrEmpty(DeliveryAddress) ? DeliveryAddress : CustomerAddress;
+        private string? _finalAddress;
+        public string FinalAddress
+        {
+            get => !string.IsNullOrEmpty(_finalAddress)
+                ? _finalAddress
+                : (!string.IsNullOrEmpty(DeliveryAddress) ? DeliveryAddress : CustomerAddress);
+            set => _finalAddress = value;
+        }
     }
 
     public class OrderDetailDto
@@ -27,6 +33,12 @@ namespace ComputerStore.Admin.Services
         public string ProductName { get; set; } = string.Empty;
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
-        public decimal TotalPrice => Quantity * UnitPrice;
+
+        private decimal? _totalPrice;
+        public decimal TotalPrice
+        {
+            get => _totalPrice ?? (Quantity * UnitPrice);
+            set => _totalPrice = value;
+        }
     }
 }

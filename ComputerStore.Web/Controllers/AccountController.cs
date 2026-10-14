@@ -27,50 +27,44 @@ namespace ComputerStore.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl)
         {
+            ViewBag.ReturnUrl = returnUrl;
             if (!ModelState.IsValid) return View(model);
 
             try
             {
                 var client = _httpClientFactory.CreateClient("StoreAPI");
-                var response = await client.GetAsync("customers");
 
-                ProfileViewModel? loggedCustomer = null;
-
-                if (response.IsSuccessStatusCode)
+                // Gửi payload xác thực đăng nhập tới API Users
+                var loginPayload = new
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    using var doc = JsonDocument.Parse(json);
-                    foreach (var elem in doc.RootElement.EnumerateArray())
-                    {
-                        var phone = elem.TryGetProperty("phone", out var p) ? p.GetString() : (elem.TryGetProperty("phoneNumber", out var p2) ? p2.GetString() : "");
-                        var email = elem.TryGetProperty("email", out var e) ? e.GetString() : "";
+                    Username = model.Username.Trim(),
+                    Password = model.Password
+                };
 
-                        if (phone == model.Username || email == model.Username)
-                        {
-                            loggedCustomer = new ProfileViewModel
-                            {
-                                CustomerId = elem.TryGetProperty("customerId", out var cid) ? cid.GetInt32() : (elem.TryGetProperty("id", out var cid2) ? cid2.GetInt32() : 1),
-                                FullName = elem.TryGetProperty("fullName", out var fn) ? fn.GetString() ?? "Khách hàng" : (elem.TryGetProperty("name", out var n) ? n.GetString() ?? "Khách hàng" : "Khách hàng"),
-                                PhoneNumber = phone ?? model.Username,
-                                Email = email ?? "",
-                                Address = elem.TryGetProperty("address", out var addr) ? addr.GetString() ?? "" : ""
-                            };
-                            break;
-                        }
-                    }
+                var content = new StringContent(
+                    JsonSerializer.Serialize(loginPayload),
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                );
+
+                var response = await client.PostAsync("users/login", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    ModelState.AddModelError("", "Tài khoản chưa tồn tại hoặc mật khẩu không chính xác. Vui lòng đăng ký nếu chưa có tài khoản!");
+                    return View(model);
                 }
 
-                // Nếu chưa có trong DB API hoặc đang chạy thử nghiệm
+                var json = await response.Content.ReadAsStringAsync();
+                var loggedCustomer = JsonSerializer.Deserialize<ProfileViewModel>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
                 if (loggedCustomer == null)
                 {
-                    loggedCustomer = new ProfileViewModel
-                    {
-                        CustomerId = 101,
-                        FullName = model.Username.Contains("@") ? model.Username.Split('@')[0] : "Khách hàng " + model.Username,
-                        PhoneNumber = model.Username,
-                        Email = model.Username.Contains("@") ? model.Username : "customer@dtbstore.vn",
-                        Address = "TP. Hồ Chí Minh"
-                    };
+                    ModelState.AddModelError("", "Không thể phân giải thông tin tài khoản. Vui lòng thử lại!");
+                    return View(model);
                 }
 
                 // Lưu thông tin người dùng vào Session
@@ -82,11 +76,11 @@ namespace ComputerStore.Web.Controllers
                     return Redirect(returnUrl);
                 }
 
-                return RedirectToAction("Profile");
+                return RedirectToAction("Index", "Product");
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError("", $"Lỗi xác thực: {ex.Message}");
+                ModelState.AddModelError("", $"Lỗi kết nối máy chủ xác thực: {ex.Message}");
                 return View(model);
             }
         }
@@ -109,34 +103,36 @@ namespace ComputerStore.Web.Controllers
                 var client = _httpClientFactory.CreateClient("StoreAPI");
                 var payload = new
                 {
-                    FullName = model.FullName,
-                    PhoneNumber = model.PhoneNumber,
-                    Phone = model.PhoneNumber,
-                    Email = model.Email,
-                    Address = model.Address,
+                    Username = !string.IsNullOrWhiteSpace(model.PhoneNumber) ? model.PhoneNumber.Trim() : model.Email.Trim(),
+                    FullName = model.FullName.Trim(),
+                    PhoneNumber = model.PhoneNumber?.Trim() ?? "",
+                    Email = model.Email?.Trim() ?? "",
+                    Address = model.Address?.Trim() ?? "",
                     Password = model.Password
                 };
 
-                var content = new StringContent(JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json");
-                await client.PostAsync("customers", content);
+                var content = new StringContent(
+                    JsonSerializer.Serialize(payload),
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                );
 
-                // Tự động đăng nhập
-                var profile = new ProfileViewModel
+                var response = await client.PostAsync("users/register", content);
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    FullName = model.FullName,
-                    PhoneNumber = model.PhoneNumber,
-                    Email = model.Email,
-                    Address = model.Address
-                };
-                HttpContext.Session.SetString(UserSessionKey, JsonSerializer.Serialize(profile));
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    ModelState.AddModelError("", string.IsNullOrWhiteSpace(errorMsg) ? "Số điện thoại/Email này đã được đăng ký tài khoản!" : errorMsg);
+                    return View(model);
+                }
 
-                TempData["SuccessMessage"] = "Đăng ký tài khoản thành công!";
-                return RedirectToAction("Profile");
-            }
-            catch
-            {
-                TempData["SuccessMessage"] = "Đăng ký thành công!";
+                TempData["SuccessMessage"] = "Đăng ký tài khoản thành công! Vui lòng đăng nhập.";
                 return RedirectToAction("Login");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Lỗi khi đăng ký tài khoản: {ex.Message}");
+                return View(model);
             }
         }
 
@@ -173,6 +169,7 @@ namespace ComputerStore.Web.Controllers
             TempData["SuccessMessage"] = "Đã đăng xuất tài khoản.";
             return RedirectToAction("Login");
         }
+
         // GET: /Account/ForgotPassword
         [HttpGet]
         public IActionResult ForgotPassword()
@@ -189,13 +186,9 @@ namespace ComputerStore.Web.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("StoreAPI");
-
-                // Gửi yêu cầu cập nhật mật khẩu tới API nếu có endpoint reset/update
                 var payload = new
                 {
                     Username = model.Username.Trim(),
-                    Phone = model.Username.Trim(),
-                    Email = model.Username.Trim(),
                     NewPassword = model.NewPassword
                 };
 
@@ -205,18 +198,21 @@ namespace ComputerStore.Web.Controllers
                     "application/json"
                 );
 
-                // Thử cập nhật qua API customers/reset-password hoặc customers/update-password
-                await client.PostAsync("customers/reset-password", content);
+                var response = await client.PostAsync("users/forgot-password", content);
+                if (!response.IsSuccessStatusCode)
+                {
+                    ModelState.AddModelError("", "Tài khoản không tồn tại trên hệ thống!");
+                    return View(model);
+                }
 
                 TempData["SuccessMessage"] = "Đặt lại mật khẩu thành công! Hãy đăng nhập bằng mật khẩu mới.";
                 return RedirectToAction(nameof(Login));
             }
-            catch
+            catch (Exception ex)
             {
-                TempData["SuccessMessage"] = "Đặt lại mật khẩu thành công!";
-                return RedirectToAction(nameof(Login));
+                ModelState.AddModelError("", $"Lỗi kết nối: {ex.Message}");
+                return View(model);
             }
         }
     }
-
 }

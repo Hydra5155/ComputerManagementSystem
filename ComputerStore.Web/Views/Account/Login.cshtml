@@ -37,7 +37,6 @@
             box-shadow: 0 0 10px rgba(93, 242, 214, 0.4);
         }
 
-    /* Khung ô mật khẩu chứa con mắt */
     .password-wrapper {
         position: relative;
         display: flex;
@@ -51,7 +50,6 @@
             padding-right: 50px !important;
         }
 
-    /* Nút con mắt sáng dạ quang Neon Mint cực rõ */
     .btn-toggle-eye {
         position: absolute;
         right: 10px;
@@ -98,6 +96,29 @@
             color: #080c0d;
             box-shadow: 0 0 14px rgba(93, 242, 214, 0.5);
         }
+
+    .alert-cyber-danger {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid #f87171;
+        color: #fca5a5;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 13.5px;
+        margin-bottom: 20px;
+        font-weight: 600;
+        line-height: 1.5;
+    }
+
+    .alert-cyber-warning {
+        background: rgba(234, 179, 8, 0.15);
+        border: 1px solid #eab308;
+        color: #fef08a;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 13.5px;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
 </style>
 
 <div class="container py-4">
@@ -109,23 +130,39 @@
 
         @if (TempData["SuccessMessage"] != null)
         {
-            <div class="alert alert-success py-2" style="background: rgba(52, 211, 153, 0.2); border-color: #34d399; color: #34d399; font-size: 13.5px;">
+            <div class="alert alert-success py-2 mb-3" style="background: rgba(52, 211, 153, 0.2); border-color: #34d399; color: #34d399; font-size: 13.5px;">
                 @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert-cyber-warning">
+                <i class="bi bi-exclamation-circle me-1"></i> @TempData["ErrorMessage"]
+            </div>
+        }
+
+        @if (!ViewData.ModelState.IsValid && ViewData.ModelState[""]?.Errors.Count > 0)
+        {
+            <div class="alert-cyber-danger">
+                <i class="bi bi-shield-x me-1"></i>
+                @foreach (var error in ViewData.ModelState[""]!.Errors)
+                {
+                    <div>@error.ErrorMessage</div>
+                }
             </div>
         }
 
         <form action="/Account/Login" method="post">
             <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" style="font-size: 13px;"></div>
 
             <label style="color: #8da4a4; font-size: 13px; margin-bottom: 4px;">Số điện thoại hoặc Email</label>
-            <input asp-for="Username" class="form-control-cyber" placeholder="0385550832 hoặc email@domain.com" required />
+            <input asp-for="Username" class="form-control-cyber" placeholder="0385550832 hoặc email@domain.com" required autocomplete="username" />
             <span asp-validation-for="Username" class="text-danger" style="font-size: 12px;"></span>
 
             <label style="color: #8da4a4; font-size: 13px; margin-bottom: 4px;">Mật khẩu</label>
             <div class="password-wrapper">
-                <input asp-for="Password" type="password" id="loginPassword" class="form-control-cyber" placeholder="••••••••" required />
-                <!-- Biểu tượng con mắt phát sáng -->
+                <input asp-for="Password" type="password" id="loginPassword" class="form-control-cyber" placeholder="••••••••" required autocomplete="current-password" />
                 <button type="button" class="btn-toggle-eye" id="btnToggleEye" onclick="togglePassVisibility()" title="Ẩn/Hiện mật khẩu">
                     <i id="loginEyeIcon" class="bi bi-eye-fill"></i>
                 </button>
@@ -136,7 +173,6 @@
                 <label style="color: #8da4a4; cursor: pointer;">
                     <input asp-for="RememberMe" type="checkbox" style="accent-color: #5df2d6;" /> Ghi nhớ tài khoản
                 </label>
-                <!-- ĐƯỜNG DẪN TRỰC TIẾP ĐẾN TRANG QUÊN MẬT KHẨU -->
                 <a href="/Account/ForgotPassword" style="color: #5df2d6; text-decoration: none; font-weight: 600;">
                     Quên mật khẩu?
                 </a>

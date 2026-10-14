@@ -6,7 +6,6 @@ using System.Text.Json;
 
 namespace ComputerStore.Web.Controllers
 {
-    // DTO lưu trữ trong Session đảm bảo độc lập và an toàn dữ liệu
     public class CartDtoItem
     {
         public int ProductId { get; set; }
@@ -18,7 +17,7 @@ namespace ComputerStore.Web.Controllers
 
     public class CartController : Controller
     {
-        private const string CartSessionKey = "DTB_CartSession_v3";
+        private const string CartSessionKey = "BMDT_CartSession_v1";
         private readonly IHttpClientFactory _httpClientFactory;
 
         public CartController(IHttpClientFactory httpClientFactory)
@@ -26,13 +25,30 @@ namespace ComputerStore.Web.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
-        // GET: /Cart
+        private async Task<Product?> GetProductFromApiAsync(int productId)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("StoreAPI");
+                var response = await client.GetAsync($"products/{productId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<Product>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+            }
+            catch { }
+            return null;
+        }
+
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             var dtoList = GetDtoList();
 
-            // Cơ chế tự khôi phục: Nếu món hàng bị thiếu giá hoặc tên mặc định, tra cứu API để nạp lại
             if (dtoList.Any(x => x.Price <= 0 || string.IsNullOrWhiteSpace(x.ProductName) || x.ProductName == "Laptop Gaming"))
             {
                 try
@@ -75,64 +91,69 @@ namespace ComputerStore.Web.Controllers
             return View(cartItems);
         }
 
-        // THÊM SẢN PHẨM VÀO GIỎ HÀNG
         [HttpPost]
         [HttpGet]
-        public async Task<IActionResult> AddToCart(int? productId, int? id, string? productName, decimal? price, string? imageUrl, int quantity = 1)
+        public async Task<IActionResult> AddToCart(int? productId, int? id, string? productName, decimal? price, string? imageUrl, int quantity = 1, string? returnUrl = null)
         {
             int targetId = productId ?? id ?? 0;
             if (targetId <= 0) return RedirectToAction("Index", "Product");
 
-            decimal finalPrice = price ?? 0m;
-            string finalName = productName ?? "";
-            string finalImg = imageUrl ?? "";
-
-            // Nếu thiếu tên hoặc giá, gọi API để lấy dữ liệu thực tế của sản phẩm
-            if (finalPrice <= 0 || string.IsNullOrWhiteSpace(finalName))
+            var userJson = HttpContext.Session.GetString(AccountController.UserSessionKey);
+            if (string.IsNullOrEmpty(userJson))
             {
-                try
-                {
-                    var client = _httpClientFactory.CreateClient("StoreAPI");
-                    var listResp = await client.GetAsync("products");
-                    if (listResp.IsSuccessStatusCode)
-                    {
-                        var json = await listResp.Content.ReadAsStringAsync();
-                        var allProducts = JsonSerializer.Deserialize<List<Product>>(json, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-                        var prod = allProducts?.FirstOrDefault(p => p.ProductId == targetId);
-                        if (prod != null)
-                        {
-                            finalName = prod.Name;
-                            finalPrice = prod.Price;
-                            finalImg = prod.ImageUrl ?? "";
-                        }
-                    }
-                }
-                catch { }
+                TempData["ErrorMessage"] = "Bạn cần đăng nhập tài khoản để có thể mua sản phẩm.";
+                var redirectUrl = !string.IsNullOrEmpty(returnUrl) ? returnUrl : $"/Product/Detail/{targetId}";
+                return RedirectToAction("Login", "Account", new { returnUrl = redirectUrl });
             }
 
-            if (string.IsNullOrWhiteSpace(finalName)) finalName = "Laptop Gaming";
+            var productInfo = await GetProductFromApiAsync(targetId);
+
+            decimal finalPrice = price ?? (productInfo?.Price ?? 0m);
+            string finalName = !string.IsNullOrWhiteSpace(productName) ? productName : (productInfo?.Name ?? "Laptop Gaming");
+            string finalImg = !string.IsNullOrWhiteSpace(imageUrl) ? imageUrl : (productInfo?.ImageUrl ?? "");
+            int availableStock = productInfo?.StockQuantity ?? int.MaxValue;
+
+            if (availableStock <= 0)
+            {
+                TempData["ErrorMessage"] = $"Sản phẩm '{finalName}' hiện đã hết hàng!";
+                return RedirectToAction(nameof(Index));
+            }
 
             var dtoList = GetDtoList();
             var item = dtoList.FirstOrDefault(x => x.ProductId == targetId);
 
+            int addQty = quantity > 0 ? quantity : 1;
+
             if (item != null)
             {
-                item.Quantity += (quantity > 0 ? quantity : 1);
+                if (item.Quantity + addQty > availableStock)
+                {
+                    item.Quantity = availableStock;
+                    TempData["ErrorMessage"] = $"Sản phẩm '{finalName}' chỉ còn {availableStock} máy trong kho. Đã điều chỉnh về số lượng tối đa.";
+                }
+                else
+                {
+                    item.Quantity += addQty;
+                }
+
                 if (item.Price <= 0 && finalPrice > 0) item.Price = finalPrice;
                 if (item.ProductName == "Laptop Gaming" && finalName != "Laptop Gaming") item.ProductName = finalName;
             }
             else
             {
+                if (addQty > availableStock)
+                {
+                    addQty = availableStock;
+                    TempData["ErrorMessage"] = $"Sản phẩm '{finalName}' chỉ còn {availableStock} máy trong kho. Đã lấy số lượng tối đa.";
+                }
+
                 dtoList.Add(new CartDtoItem
                 {
                     ProductId = targetId,
                     ProductName = finalName,
                     Price = finalPrice,
                     ImageUrl = finalImg,
-                    Quantity = quantity > 0 ? quantity : 1
+                    Quantity = addQty
                 });
             }
 
@@ -140,9 +161,8 @@ namespace ComputerStore.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // CẬP NHẬT SỐ LƯỢNG (TĂNG / GIẢM / SỬA)
         [HttpGet]
-        public IActionResult UpdateQuantity(int productId, int quantity)
+        public async Task<IActionResult> UpdateQuantity(int productId, int quantity)
         {
             if (productId <= 0) return RedirectToAction(nameof(Index));
 
@@ -157,7 +177,18 @@ namespace ComputerStore.Web.Controllers
                 }
                 else
                 {
-                    item.Quantity = quantity;
+                    var prod = await GetProductFromApiAsync(productId);
+                    int stock = prod?.StockQuantity ?? int.MaxValue;
+
+                    if (quantity > stock)
+                    {
+                        item.Quantity = stock;
+                        TempData["ErrorMessage"] = $"Sản phẩm '{item.ProductName}' chỉ còn {stock} máy trong kho.";
+                    }
+                    else
+                    {
+                        item.Quantity = quantity;
+                    }
                 }
                 SaveDtoList(dtoList);
             }
@@ -165,7 +196,6 @@ namespace ComputerStore.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // XÓA 1 MÓN HÀNG KHỎI GIỎ
         [HttpGet]
         public IActionResult RemoveFromCart(int productId)
         {
@@ -183,7 +213,6 @@ namespace ComputerStore.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // LÀM TRỐNG TOÀN BỘ GIỎ HÀNG
         [HttpGet]
         public IActionResult ClearCart()
         {
@@ -191,10 +220,16 @@ namespace ComputerStore.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Cart/Checkout - Trang thanh toán
         [HttpGet]
         public IActionResult Checkout()
         {
+            var userJson = HttpContext.Session.GetString(AccountController.UserSessionKey);
+            if (string.IsNullOrEmpty(userJson))
+            {
+                TempData["ErrorMessage"] = "Vui lòng đăng nhập để tiến hành đặt hàng.";
+                return RedirectToAction("Login", "Account", new { returnUrl = "/Cart/Checkout" });
+            }
+
             var dtoList = GetDtoList();
             if (!dtoList.Any()) return RedirectToAction(nameof(Index));
 
@@ -202,39 +237,58 @@ namespace ComputerStore.Web.Controllers
             return View(cartItems);
         }
 
-        // POST: /Cart/Checkout - LƯU ĐƠN VÀO HỆ THỐNG / DATABASE QUA WEB API
         [HttpPost]
         public async Task<IActionResult> Checkout(string customerName, string customerPhone, string shippingAddress)
         {
+            var userJson = HttpContext.Session.GetString(AccountController.UserSessionKey);
+            if (string.IsNullOrEmpty(userJson))
+            {
+                TempData["ErrorMessage"] = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                return RedirectToAction("Login", "Account", new { returnUrl = "/Cart/Checkout" });
+            }
+
             var dtoList = GetDtoList();
             if (!dtoList.Any())
             {
                 return RedirectToAction("Index", "Product");
             }
 
+            string sessionUsername = "";
+            string sessionFullName = "";
+            string sessionPhone = "";
+
+            try
+            {
+                using var doc = JsonDocument.Parse(userJson);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("Username", out var u)) sessionUsername = u.GetString() ?? "";
+                if (root.TryGetProperty("FullName", out var fn)) sessionFullName = fn.GetString() ?? "";
+                if (root.TryGetProperty("PhoneNumber", out var ph)) sessionPhone = ph.GetString() ?? "";
+            }
+            catch { }
+
+            string finalName = !string.IsNullOrWhiteSpace(customerName) ? customerName.Trim() : (!string.IsNullOrWhiteSpace(sessionFullName) ? sessionFullName : "Khách hàng");
+            string finalPhone = !string.IsNullOrWhiteSpace(customerPhone) ? customerPhone.Trim() : (!string.IsNullOrWhiteSpace(sessionPhone) ? sessionPhone : sessionUsername);
+            string finalAddress = !string.IsNullOrWhiteSpace(shippingAddress) ? shippingAddress.Trim() : "Địa chỉ mặc định theo tài khoản";
+
             try
             {
                 var client = _httpClientFactory.CreateClient("StoreAPI");
 
-                // Đóng gói Payload theo Entity Order và OrderDetail
                 var orderPayload = new
                 {
-                    CustomerName = string.IsNullOrWhiteSpace(customerName) ? "Khách hàng" : customerName.Trim(),
-                    CustomerPhone = string.IsNullOrWhiteSpace(customerPhone) ? "" : customerPhone.Trim(),
-                    Phone = string.IsNullOrWhiteSpace(customerPhone) ? "" : customerPhone.Trim(),
-                    ShippingAddress = string.IsNullOrWhiteSpace(shippingAddress) ? "" : shippingAddress.Trim(),
-                    Address = string.IsNullOrWhiteSpace(shippingAddress) ? "" : shippingAddress.Trim(),
+                    Username = sessionUsername,
+                    CustomerName = finalName,
+                    CustomerPhone = finalPhone,
+                    DeliveryAddress = finalAddress,
+                    CustomerAddress = finalAddress,
                     OrderDate = DateTime.Now,
                     TotalAmount = dtoList.Sum(x => x.Price * x.Quantity),
                     Status = "Chờ xử lý",
                     OrderDetails = dtoList.Select(item => new
                     {
                         ProductId = item.ProductId,
-                        ProductName = item.ProductName,
-                        Quantity = item.Quantity,
-                        UnitPrice = item.Price,
-                        Price = item.Price,
-                        TotalPrice = item.Price * item.Quantity
+                        Quantity = item.Quantity
                     }).ToList()
                 };
 
@@ -244,16 +298,16 @@ namespace ComputerStore.Web.Controllers
                     "application/json"
                 );
 
-                // Gửi request POST tới endpoint orders của Web API
                 var response = await client.PostAsync("orders", jsonContent);
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    // Fallback thử endpoint phụ nếu API dùng quy ước khác
-                    await client.PostAsync("Orders/create", jsonContent);
+                    var errorResp = await response.Content.ReadAsStringAsync();
+                    ViewBag.Error = $"Đặt hàng không thành công: {errorResp}";
+                    var items = ConvertToCartItems(dtoList);
+                    return View(items);
                 }
 
-                // Xóa session giỏ hàng sau khi đặt thành công
                 HttpContext.Session.Remove(CartSessionKey);
                 TempData["SuccessMessage"] = "Đặt hàng thành công!";
                 return RedirectToAction(nameof(OrderSuccess));
@@ -266,14 +320,12 @@ namespace ComputerStore.Web.Controllers
             }
         }
 
-        // GET: /Cart/OrderSuccess - Trang thông báo thành công
         [HttpGet]
         public IActionResult OrderSuccess()
         {
             return View();
         }
 
-        // --- HÀM PHỤ TRỢ NỘI BỘ ---
         private List<CartDtoItem> GetDtoList()
         {
             var json = HttpContext.Session.GetString(CartSessionKey);
@@ -294,7 +346,6 @@ namespace ComputerStore.Web.Controllers
             HttpContext.Session.SetString(CartSessionKey, JsonSerializer.Serialize(list));
         }
 
-        // Ánh xạ sang List<CartItem> mà View yêu cầu
         private List<CartItem> ConvertToCartItems(List<CartDtoItem> dtoList)
         {
             var result = new List<CartItem>();

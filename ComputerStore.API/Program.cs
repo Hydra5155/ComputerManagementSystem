@@ -1,5 +1,4 @@
-
-using ComputerStore.Infrastructure.Data;
+﻿using ComputerStore.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace ComputerStore.API
@@ -10,18 +9,33 @@ namespace ComputerStore.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Cấu hình DbContext
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-            // Add services to the container.
 
+            // Bổ sung CORS policy để các client (Web / Admin) kết nối thông suốt
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
+
+            // Cấu hình Controllers và xử lý tham chiếu vòng
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
             });
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
             builder.Services.AddOpenApi();
 
             var app = builder.Build();
+
+            // Kích hoạt CORS trước khi ánh xạ routing/controllers
+            app.UseCors("AllowAll");
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -32,7 +46,6 @@ namespace ComputerStore.API
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 

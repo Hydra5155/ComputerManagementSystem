@@ -20,77 +20,140 @@ namespace ComputerStore.API.Controllers
             _context = context;
         }
 
-        // GET: api/orders - Lấy danh sách đơn hàng kèm chi tiết (được chiếu phẳng để tránh cycle loop)
+        // GET: api/orders - Lấy danh sách đơn hàng kèm cơ chế tự sửa lỗi dữ liệu từ Users
         [HttpGet]
-        public async Task<IActionResult> GetOrders()
+        public async Task<IActionResult> GetOrders([FromQuery] string? search, [FromQuery] string? customerPhone)
         {
-            var orders = await _context.Orders
-                .Include(o => o.OrderDetails)
-                .ThenInclude(d => d.Product)
-                .OrderByDescending(o => o.OrderDate)
-                .AsNoTracking()
-                .Select(o => new
-                {
-                    o.OrderId,
-                    o.CustomerName,
-                    o.CustomerPhone,
-                    DeliveryAddress = o.DeliveryAddress,
-                    o.OrderDate,
-                    o.TotalAmount,
-                    o.Status,
-                    OrderDetails = o.OrderDetails.Select(d => new
-                    {
-                        d.OrderDetailId,
-                        d.OrderId,
-                        d.ProductId,
-                        ProductName = d.Product != null ? d.Product.Name : ("Sản phẩm #" + d.ProductId),
-                        d.Quantity,
-                        d.UnitPrice,
-                        TotalPrice = d.Quantity * d.UnitPrice
-                    }).ToList()
-                })
-                .ToListAsync();
+            try
+            {
+                var users = await _context.Users.AsNoTracking().ToListAsync();
 
-            return Ok(orders);
+                var query = _context.Orders
+                    .Include(o => o.OrderDetails)
+                    .ThenInclude(d => d.Product)
+                    .AsNoTracking()
+                    .AsQueryable();
+
+                if (!string.IsNullOrWhiteSpace(customerPhone))
+                {
+                    string phone = customerPhone.Trim().ToLower();
+                    query = query.Where(o => o.CustomerPhone.ToLower().Contains(phone));
+                }
+
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    string kw = search.Trim().ToLower();
+                    query = query.Where(o => o.CustomerName.ToLower().Contains(kw) ||
+                                             o.CustomerPhone.ToLower().Contains(kw) ||
+                                             (o.DeliveryAddress != null && o.DeliveryAddress.ToLower().Contains(kw)) ||
+                                             o.OrderId.ToString().Contains(kw));
+                }
+
+                var rawOrders = await query
+                    .OrderByDescending(o => o.OrderDate)
+                    .ToListAsync();
+
+                var orders = rawOrders.Select(o =>
+                {
+                    var matchedUser = users.FirstOrDefault(u =>
+                        (!string.IsNullOrEmpty(o.CustomerName) && u.Username.Equals(o.CustomerName, StringComparison.OrdinalIgnoreCase)) ||
+                        (!string.IsNullOrEmpty(o.CustomerPhone) && (
+                            (u.Email != null && u.Email.Equals(o.CustomerPhone, StringComparison.OrdinalIgnoreCase)) ||
+                            (u.PhoneNumber != null && u.PhoneNumber.Equals(o.CustomerPhone, StringComparison.OrdinalIgnoreCase)) ||
+                            u.Username.Equals(o.CustomerPhone, StringComparison.OrdinalIgnoreCase)
+                        ))
+                    );
+
+                    string displayName = !string.IsNullOrWhiteSpace(matchedUser?.FullName)
+                        ? matchedUser.FullName
+                        : (!string.IsNullOrWhiteSpace(o.CustomerName) ? o.CustomerName : "Khách hàng");
+
+                    string displayPhone = o.CustomerPhone;
+                    if (string.IsNullOrWhiteSpace(displayPhone) || displayPhone.Contains('@'))
+                    {
+                        displayPhone = matchedUser?.PhoneNumber ?? (matchedUser?.Username ?? "Chưa có SĐT");
+                    }
+
+                    string displayAddress = !string.IsNullOrWhiteSpace(o.DeliveryAddress)
+                        ? o.DeliveryAddress
+                        : "Chưa cập nhật địa chỉ";
+
+                    return new
+                    {
+                        o.OrderId,
+                        CustomerName = displayName,
+                        CustomerPhone = displayPhone,
+                        DeliveryAddress = displayAddress,
+                        FinalAddress = displayAddress,
+                        o.OrderDate,
+                        o.TotalAmount,
+                        o.Status,
+                        OrderDetails = o.OrderDetails.Select(d => new
+                        {
+                            d.OrderDetailId,
+                            d.OrderId,
+                            d.ProductId,
+                            ProductName = d.Product != null ? d.Product.Name : ("Sản phẩm #" + d.ProductId),
+                            d.Quantity,
+                            d.UnitPrice,
+                            TotalPrice = d.Quantity * d.UnitPrice
+                        }).ToList()
+                    };
+                }).ToList();
+
+                return Ok(orders);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi truy vấn danh sách đơn hàng: {ex.Message}");
+            }
         }
 
-        // GET: api/orders/{id} - Lấy chi tiết 1 đơn hàng cụ thể
+        // GET: api/orders/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetOrder(int id)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderDetails)
-                .ThenInclude(d => d.Product)
-                .AsNoTracking()
-                .Where(o => o.OrderId == id)
-                .Select(o => new
-                {
-                    o.OrderId,
-                    o.CustomerName,
-                    o.CustomerPhone,
-                    DeliveryAddress = o.DeliveryAddress,
-                    o.OrderDate,
-                    o.TotalAmount,
-                    o.Status,
-                    OrderDetails = o.OrderDetails.Select(d => new
-                    {
-                        d.OrderDetailId,
-                        d.OrderId,
-                        d.ProductId,
-                        ProductName = d.Product != null ? d.Product.Name : ("Sản phẩm #" + d.ProductId),
-                        d.Quantity,
-                        d.UnitPrice,
-                        TotalPrice = d.Quantity * d.UnitPrice
-                    }).ToList()
-                })
-                .FirstOrDefaultAsync();
-
-            if (order == null)
+            try
             {
-                return NotFound($"Không tìm thấy đơn hàng #{id}");
-            }
+                var order = await _context.Orders
+                    .Include(o => o.OrderDetails)
+                    .ThenInclude(d => d.Product)
+                    .AsNoTracking()
+                    .Where(o => o.OrderId == id)
+                    .Select(o => new
+                    {
+                        o.OrderId,
+                        o.CustomerName,
+                        o.CustomerPhone,
+                        DeliveryAddress = !string.IsNullOrWhiteSpace(o.DeliveryAddress) ? o.DeliveryAddress : "Chưa có địa chỉ",
+                        FinalAddress = !string.IsNullOrWhiteSpace(o.DeliveryAddress) ? o.DeliveryAddress : "Chưa có địa chỉ",
+                        o.OrderDate,
+                        o.TotalAmount,
+                        o.Status,
+                        OrderDetails = o.OrderDetails.Select(d => new
+                        {
+                            d.OrderDetailId,
+                            d.OrderId,
+                            d.ProductId,
+                            ProductName = d.Product != null ? d.Product.Name : ("Sản phẩm #" + d.ProductId),
+                            d.Quantity,
+                            d.UnitPrice,
+                            TotalPrice = d.Quantity * d.UnitPrice
+                        }).ToList()
+                    })
+                    .FirstOrDefaultAsync();
 
-            return Ok(order);
+                if (order == null)
+                {
+                    return NotFound($"Không tìm thấy đơn hàng #{id}");
+                }
+
+                return Ok(order);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi truy vấn đơn hàng #{id}: {ex.Message}");
+            }
         }
 
         // POST: api/orders - Đặt hàng với Transaction an toàn và trừ tồn kho
@@ -101,6 +164,32 @@ namespace ComputerStore.API.Controllers
             {
                 return BadRequest("Thông tin đơn hàng không hợp lệ hoặc giỏ hàng trống.");
             }
+
+            string finalCustomerName = request.CustomerName?.Trim() ?? string.Empty;
+            string finalCustomerPhone = request.CustomerPhone?.Trim() ?? string.Empty;
+            string finalDeliveryAddress = (request.DeliveryAddress ?? request.CustomerAddress ?? string.Empty).Trim();
+
+            if (!string.IsNullOrWhiteSpace(request.Username))
+            {
+                string uName = request.Username.Trim().ToLower();
+                var user = await _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Username.ToLower() == uName ||
+                                              (u.PhoneNumber != null && u.PhoneNumber == uName) ||
+                                              (u.Email != null && u.Email.ToLower() == uName));
+
+                if (user != null)
+                {
+                    if (string.IsNullOrWhiteSpace(finalCustomerName))
+                        finalCustomerName = user.FullName;
+
+                    if (string.IsNullOrWhiteSpace(finalCustomerPhone))
+                        finalCustomerPhone = user.PhoneNumber ?? user.Username;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(finalCustomerName)) finalCustomerName = "Khách hàng";
+            if (string.IsNullOrWhiteSpace(finalCustomerPhone)) finalCustomerPhone = "Chưa cung cấp";
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -123,9 +212,7 @@ namespace ComputerStore.API.Controllers
                         return BadRequest($"Sản phẩm '{product.Name}' chỉ còn {product.StockQuantity} máy trong kho.");
                     }
 
-                    // Trừ tồn kho trong DB
                     product.StockQuantity -= detail.Quantity;
-
                     decimal unitPrice = product.Price;
                     calculatedTotal += unitPrice * detail.Quantity;
 
@@ -139,9 +226,9 @@ namespace ComputerStore.API.Controllers
 
                 var newOrder = new Order
                 {
-                    CustomerName = request.CustomerName?.Trim() ?? string.Empty,
-                    CustomerPhone = request.CustomerPhone?.Trim() ?? string.Empty,
-                    DeliveryAddress = (request.DeliveryAddress ?? request.CustomerAddress ?? string.Empty).Trim(),
+                    CustomerName = finalCustomerName,
+                    CustomerPhone = finalCustomerPhone,
+                    DeliveryAddress = finalDeliveryAddress,
                     OrderDate = DateTime.Now,
                     TotalAmount = calculatedTotal,
                     Status = "Chờ xử lý",
@@ -150,7 +237,6 @@ namespace ComputerStore.API.Controllers
 
                 _context.Orders.Add(newOrder);
                 await _context.SaveChangesAsync();
-
                 await transaction.CommitAsync();
 
                 return Ok(new
@@ -171,38 +257,114 @@ namespace ComputerStore.API.Controllers
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] OrderStatusUpdateDto dto)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderDetails)
-                .FirstOrDefaultAsync(o => o.OrderId == id);
-
-            if (order == null)
+            try
             {
-                return NotFound("Không tìm thấy đơn hàng cần cập nhật.");
-            }
+                var order = await _context.Orders
+                    .Include(o => o.OrderDetails)
+                    .FirstOrDefaultAsync(o => o.OrderId == id);
 
-            // Nếu hủy đơn hàng thì hoàn trả lại số lượng máy vào kho
-            if (dto.Status == "Đã hủy" && order.Status != "Đã hủy")
-            {
-                foreach (var detail in order.OrderDetails)
+                if (order == null)
                 {
-                    var product = await _context.Products.FindAsync(detail.ProductId);
-                    if (product != null)
+                    return NotFound("Không tìm thấy đơn hàng cần cập nhật.");
+                }
+
+                if (dto.Status == "Đã hủy" && order.Status != "Đã hủy")
+                {
+                    foreach (var detail in order.OrderDetails)
                     {
-                        product.StockQuantity += detail.Quantity;
+                        var product = await _context.Products.FindAsync(detail.ProductId);
+                        if (product != null)
+                        {
+                            product.StockQuantity += detail.Quantity;
+                        }
                     }
                 }
+
+                order.Status = dto.Status;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = $"Đã cập nhật trạng thái đơn hàng #{id} thành '{dto.Status}'" });
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi cập nhật trạng thái đơn hàng: {ex.Message}");
+            }
+        }
 
-            order.Status = dto.Status;
-            await _context.SaveChangesAsync();
+        // PUT: api/orders/{id}/shipping - Sửa thông tin giao hàng (Tên, SĐT, Địa chỉ)
+        [HttpPut("{id}/shipping")]
+        public async Task<IActionResult> UpdateOrderShipping(int id, [FromBody] OrderShippingUpdateDto dto)
+        {
+            try
+            {
+                var order = await _context.Orders.FindAsync(id);
+                if (order == null) return NotFound($"Không tìm thấy đơn hàng #{id}");
 
-            return Ok(new { Message = $"Đã cập nhật trạng thái đơn hàng #{id} thành '{dto.Status}'" });
+                if (!string.IsNullOrWhiteSpace(dto.CustomerName))
+                    order.CustomerName = dto.CustomerName.Trim();
+
+                if (!string.IsNullOrWhiteSpace(dto.CustomerPhone))
+                    order.CustomerPhone = dto.CustomerPhone.Trim();
+
+                if (!string.IsNullOrWhiteSpace(dto.DeliveryAddress))
+                    order.DeliveryAddress = dto.DeliveryAddress.Trim();
+
+                await _context.SaveChangesAsync();
+                return Ok(new { Message = $"Cập nhật thông tin giao nhận đơn #{id} thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Lỗi cập nhật: {ex.Message}");
+            }
+        }
+
+        // DELETE: api/orders/{id} - Xóa đơn hàng và hoàn trả tồn kho nếu đơn chưa giao xong
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteOrder(int id)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var order = await _context.Orders
+                    .Include(o => o.OrderDetails)
+                    .FirstOrDefaultAsync(o => o.OrderId == id);
+
+                if (order == null)
+                {
+                    return NotFound($"Không tìm thấy đơn hàng #{id}");
+                }
+
+                // Nếu đơn chưa hoàn thành và chưa hủy, hoàn lại số lượng sản phẩm vào kho
+                if (order.Status != "Đã hoàn thành" && order.Status != "Đã hủy")
+                {
+                    foreach (var detail in order.OrderDetails)
+                    {
+                        var prod = await _context.Products.FindAsync(detail.ProductId);
+                        if (prod != null)
+                        {
+                            prod.StockQuantity += detail.Quantity;
+                        }
+                    }
+                }
+
+                _context.OrderDetails.RemoveRange(order.OrderDetails);
+                _context.Orders.Remove(order);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return Ok(new { Message = $"Đã xóa thành công đơn hàng #{id}" });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, $"Lỗi xóa đơn hàng: {ex.Message}");
+            }
         }
     }
 
-    // Các DTOs phục vụ nhận dữ liệu đầu vào cho Controller
     public class OrderCreateDto
     {
+        public string? Username { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerPhone { get; set; } = string.Empty;
         public string? DeliveryAddress { get; set; }
@@ -219,5 +381,12 @@ namespace ComputerStore.API.Controllers
     public class OrderStatusUpdateDto
     {
         public string Status { get; set; } = string.Empty;
+    }
+
+    public class OrderShippingUpdateDto
+    {
+        public string? CustomerName { get; set; }
+        public string? CustomerPhone { get; set; }
+        public string? DeliveryAddress { get; set; }
     }
 }

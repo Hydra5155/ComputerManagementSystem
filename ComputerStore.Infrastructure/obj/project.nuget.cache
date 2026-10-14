@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "tLpVgpRa5ww=",
+  "dgSpecHash": "CeAaPq1UrPM=",
   "success": true,
-  "projectFilePath": "D:\\LCB\\LCB_C#_DoAn_Demo\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Infrastructure\\ComputerStore.Infrastructure.csproj",
+  "projectFilePath": "D:\\LCB\\LCB_C#_DoAn_Demo - Sao chép (2)\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Infrastructure\\ComputerStore.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Chi Bao\\.nuget\\packages\\azure.core\\1.41.0\\azure.core.1.41.0.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\azure.identity\\1.12.1\\azure.identity.1.12.1.nupkg.sha512",

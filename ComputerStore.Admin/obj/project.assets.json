@@ -227,11 +227,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\LCB\\LCB_C#_DoAn_Demo\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Admin\\ComputerStore.Admin.csproj",
+      "projectUniqueName": "D:\\LCB\\LCB_C#_DoAn_Demo - Sao chép (2)\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Admin\\ComputerStore.Admin.csproj",
       "projectName": "ComputerStore.Admin",
-      "projectPath": "D:\\LCB\\LCB_C#_DoAn_Demo\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Admin\\ComputerStore.Admin.csproj",
+      "projectPath": "D:\\LCB\\LCB_C#_DoAn_Demo - Sao chép (2)\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Admin\\ComputerStore.Admin.csproj",
       "packagesPath": "C:\\Users\\Chi Bao\\.nuget\\packages\\",
-      "outputPath": "D:\\LCB\\LCB_C#_DoAn_Demo\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Admin\\obj\\",
+      "outputPath": "D:\\LCB\\LCB_C#_DoAn_Demo - Sao chép (2)\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Admin\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -252,8 +252,8 @@
         "net9.0-windows7.0": {
           "targetAlias": "net9.0-windows",
           "projectReferences": {
-            "D:\\LCB\\LCB_C#_DoAn_Demo\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Core\\ComputerStore.Core.csproj": {
-              "projectPath": "D:\\LCB\\LCB_C#_DoAn_Demo\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Core\\ComputerStore.Core.csproj"
+            "D:\\LCB\\LCB_C#_DoAn_Demo - Sao chép (2)\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Core\\ComputerStore.Core.csproj": {
+              "projectPath": "D:\\LCB\\LCB_C#_DoAn_Demo - Sao chép (2)\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Core\\ComputerStore.Core.csproj"
             }
           }
         }

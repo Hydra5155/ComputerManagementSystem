@@ -42,95 +42,258 @@
 }
 
 <style>
+    /* NẠP FONT CHỮ HIỆN ĐẠI (PLUS JAKARTA SANS & INTER) */
+    @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+    :root {
+        --checkout-font: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --neon-teal: #5df2d6;
+        --dark-card: #0e1516;
+        --dark-border: #1e453e;
+        --dark-input: #142224;
+    }
+
     body {
         background-color: #080c0d !important;
         color: #ffffff;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: var(--checkout-font);
+        letter-spacing: -0.01em;
+        -webkit-font-smoothing: antialiased;
     }
 
     .checkout-card {
-        background-color: #0e1516;
-        border: 1px solid #1e453e;
-        border-radius: 12px;
-        padding: 24px;
+        background-color: var(--dark-card);
+        border: 1.5px solid var(--dark-border);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .checkout-title {
+        color: var(--neon-teal);
+        font-weight: 800;
+        font-size: 26px;
+        letter-spacing: -0.02em;
+        margin-bottom: 24px;
+    }
+
+    /* NHÃN VÀ Ô NHẬP LIỆU NỔI BẬT */
+    .field-label {
+        color: var(--neon-teal);
+        font-size: 13.5px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .form-control-cyber {
-        background-color: #141f21;
-        border: 1px solid #1e453e;
-        color: #ffffff;
-        border-radius: 6px;
-        padding: 10px 14px;
+        font-family: var(--checkout-font) !important;
+        background-color: var(--dark-input) !important;
+        border: 1.5px solid #204841 !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        font-size: 0.98rem !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
         width: 100%;
-        margin-bottom: 15px;
+        margin-bottom: 6px;
         outline: none;
+        transition: all 0.25s ease-in-out;
     }
 
-        .form-control-cyber:focus {
-            border-color: #5df2d6;
-            box-shadow: 0 0 8px rgba(93, 242, 214, 0.4);
+        .form-control-cyber::placeholder {
+            color: #8da4a4 !important;
+            font-weight: 400 !important;
+            opacity: 0.85;
         }
 
+        .form-control-cyber:focus {
+            background-color: #1a2c2f !important;
+            border-color: var(--neon-teal) !important;
+            box-shadow: 0 0 12px rgba(93, 242, 214, 0.4) !important;
+            color: #ffffff !important;
+        }
+
+    .field-hint {
+        color: #94a3b8;
+        font-size: 12px;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    /* KHỐI LƯU Ý GIAO HÀNG (CHUẨN THEO ẢNH MẪU) */
+    .delivery-notice-box {
+        background: #121c1e;
+        border-left: 4px solid var(--neon-teal);
+        border-radius: 8px;
+        padding: 18px 20px;
+        margin-top: 18px;
+        font-size: 14.5px;
+        color: #f1f5f9;
+        line-height: 1.7;
+    }
+
+        .delivery-notice-box strong.title-region {
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 15px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .delivery-notice-box ul {
+            margin-bottom: 10px;
+            padding-left: 22px;
+        }
+
+        .delivery-notice-box li {
+            color: #e2e8f0;
+            margin-bottom: 2px;
+        }
+
+    .delivery-notice-footer {
+        color: #fde047;
+        font-size: 13.5px;
+        font-weight: 500;
+        margin-top: 6px;
+    }
+
+    /* NÚT HOÀN TẤT ĐẶT HÀNG */
     .btn-submit-order {
         background: linear-gradient(135deg, #00796b, #004d40);
-        border: 1px solid #5df2d6;
-        color: #fff;
+        border: 1.5px solid var(--neon-teal);
+        color: #ffffff;
         font-weight: 700;
         cursor: pointer;
-        border-radius: 6px;
-        transition: 0.2s;
+        border-radius: 8px;
+        font-size: 16px;
+        padding: 14px 20px;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
         .btn-submit-order:hover {
-            background: #5df2d6;
+            background: var(--neon-teal);
             color: #080c0d;
-            box-shadow: 0 0 12px rgba(93, 242, 214, 0.4);
+            box-shadow: 0 0 16px rgba(93, 242, 214, 0.6);
+            transform: translateY(-2px);
         }
+
+    /* TỐI ƯU GIAO DIỆN CHO ĐIỆN THOẠI (RESPONSIVE) */
+    @@media (max-width: 768px) {
+        .checkout-card {
+            padding: 18px;
+            border-radius: 12px;
+        }
+
+        .checkout-title {
+            font-size: 20px;
+            margin-bottom: 18px;
+        }
+
+        .form-control-cyber {
+            font-size: 16px !important; /* Tránh zoom ngoài ý muốn trên iOS */
+            padding: 12px 14px !important;
+        }
+
+        .delivery-notice-box {
+            padding: 14px 16px;
+            font-size: 13.5px;
+        }
+
+        .btn-submit-order {
+            padding: 14px;
+            font-size: 15px;
+        }
+    }
 </style>
 
 <div class="container py-4">
-    <a href="/Cart" style="color: #5df2d6; text-decoration: none; font-weight: 600; margin-bottom: 20px; display: inline-block;">
-        ← Quay lại giỏ hàng
+    <!-- NÚT QUAY LẠI -->
+    <a href="/Cart" style="color: #5df2d6; text-decoration: none; font-weight: 700; font-size: 14px; margin-bottom: 22px; display: inline-flex; align-items: center; gap: 6px; transition: transform 0.2s;" onmouseover="this.style.transform='translateX(-3px)'" onmouseout="this.style.transform='none'">
+        <i class="bi bi-arrow-left"></i> Quay lại giỏ hàng
     </a>
 
-    <h2 style="color: #5df2d6; font-weight: 800; margin-bottom: 25px;">⚡ XÁC NHẬN THANH TOÁN & ĐẶT HÀNG</h2>
+    <h2 class="checkout-title">⚡ XÁC NHẬN THANH TOÁN & ĐẶT HÀNG</h2>
 
     <form asp-controller="Cart" asp-action="Checkout" method="post">
-        <div class="row">
-            <!-- Cột thông tin giao hàng -->
-            <div class="col-lg-7 mb-4">
+        <div class="row g-4">
+            <!-- CỘT THÔNG TIN GIAO HÀNG -->
+            <div class="col-lg-7">
                 <div class="checkout-card">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 style="color: #5df2d6; font-weight: 700; margin: 0;">Thông tin nhận hàng</h4>
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h4 style="color: #5df2d6; font-weight: 700; margin: 0; font-size: 18px;">
+                            <i class="bi bi-geo-alt-fill me-1"></i> Thông tin nhận hàng
+                        </h4>
                         @if (customer != null)
                         {
-                            <span style="font-size: 12px; color: #34d399; border: 1px solid #34d399; padding: 2px 8px; border-radius: 4px;">
-                                Đã nạp từ tài khoản: @customer.FullName
+                            <span style="font-size: 12px; color: #34d399; border: 1px solid #34d399; background: rgba(52, 211, 153, 0.08); padding: 4px 10px; border-radius: 6px; font-weight: 700;">
+                                <i class="bi bi-shield-check me-1"></i> Đã nạp từ tài khoản: @customer.FullName
                             </span>
                         }
                         else
                         {
-                            <a href="/Account/Login?returnUrl=/Cart/Checkout" style="font-size: 13px; color: #5df2d6; text-decoration: none;">
-                                🔑 Đăng nhập để tự điền
+                            <a href="/Account/Login?returnUrl=/Cart/Checkout" style="font-size: 13px; color: #5df2d6; text-decoration: none; font-weight: 700;">
+                                <i class="bi bi-key-fill me-1"></i> Đăng nhập để tự điền
                             </a>
                         }
                     </div>
 
-                    <label style="color: #8da4a4; font-size: 13px; margin-bottom: 4px;">Họ và tên người nhận</label>
-                    <input type="text" name="customerName" class="form-control-cyber" value="@(customer?.FullName ?? "")" placeholder="Nguyễn Văn A" required />
+                    <!-- Ô HỌ VÀ TÊN -->
+                    <label class="field-label">
+                        <i class="bi bi-person-fill"></i> Họ và tên người nhận hàng:
+                    </label>
+                    <input type="text" name="customerName" class="form-control-cyber"
+                           value="@(customer?.FullName ?? "")"
+                           placeholder="Ví dụ: Nguyễn Văn A..." required />
+                    <small class="field-hint">Họ tên sẽ được in trực tiếp lên phiếu xuất kho và bảo hành.</small>
 
-                    <label style="color: #8da4a4; font-size: 13px; margin-bottom: 4px;">Số điện thoại</label>
-                    <input type="tel" name="customerPhone" class="form-control-cyber" value="@(customer?.PhoneNumber ?? "")" placeholder="0912 345 678" required />
+                    <!-- Ô SỐ ĐIỆN THOẠI -->
+                    <label class="field-label">
+                        <i class="bi bi-telephone-fill"></i> Số điện thoại liên hệ nhận hàng:
+                    </label>
+                    <input type="tel" name="customerPhone" class="form-control-cyber"
+                           value="@(customer?.PhoneNumber ?? "")"
+                           placeholder="Ví dụ: 0912 345 678..." required />
+                    <small class="field-hint">Shipper sẽ gọi xác nhận trước khi giao hàng tận nơi.</small>
 
-                    <label style="color: #8da4a4; font-size: 13px; margin-bottom: 4px;">Địa chỉ giao hàng</label>
-                    <textarea name="shippingAddress" class="form-control-cyber" rows="3" placeholder="Số nhà, tên đường, phường/xã, quận/huyện..." required>@(customer?.Address ?? "")</textarea>
+                    <!-- Ô ĐỊA CHỈ -->
+                    <label class="field-label">
+                        <i class="bi bi-house-door-fill"></i> Địa chỉ giao hàng chi tiết:
+                    </label>
+                    <textarea name="shippingAddress" class="form-control-cyber" rows="3"
+                              placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..." required>@(customer?.Address ?? "")</textarea>
+                    <small class="field-hint">Ghi rõ số nhà, tòa chung cư, số phòng để việc giao máy được chuẩn xác.</small>
+
+                    <!-- KHUNG LƯU Ý GIAO HÀNG (THEO MẪU ẢNH CỦA BẠN) -->
+                    <div class="delivery-notice-box">
+                        <strong class="title-region">Tại Miền Nam:</strong>
+                        <ul>
+                            <li>8h00 – 14h00 đối với hàng điện máy / laptop</li>
+                            <li>8h00 – 16h00 đối với hàng thực phẩm / phụ kiện</li>
+                        </ul>
+                        <strong class="title-region">Tại Miền Bắc:</strong>
+                        <ul>
+                            <li>Từ 8h00 – 16h00</li>
+                        </ul>
+                        <div class="delivery-notice-footer">
+                            <strong>Lưu ý:</strong> Khách đặt hàng từ 8h00 – 16h00: giao hàng trong ngày. Khách đặt hàng sau 16h00: giao hàng ngày hôm sau.
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Cột tóm tắt đơn hàng -->
+            <!-- CỘT TÓM TẮT ĐƠN HÀNG -->
             <div class="col-lg-5">
                 <div class="checkout-card">
-                    <h4 style="color: #5df2d6; font-weight: 700; margin-bottom: 20px;">Tóm tắt đơn hàng</h4>
+                    <h4 style="color: #5df2d6; font-weight: 700; margin-bottom: 20px; font-size: 18px;">
+                        <i class="bi bi-receipt me-1"></i> Tóm tắt đơn hàng
+                    </h4>
 
                     @if (Model != null)
                     {
@@ -147,25 +310,25 @@
                             var qty = qtyObj != null ? Convert.ToInt32(qtyObj) : 1;
 
                             <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom: 1px solid #142826;">
-                                <div>
-                                    <div style="font-weight: 600; color: #fff;">@name</div>
-                                    <small style="color: #8da4a4;">Số lượng: @qty</small>
+                                <div style="max-width: 68%;">
+                                    <div style="font-weight: 600; color: #fff; font-size: 14.5px; line-height: 1.4;">@name</div>
+                                    <small style="color: #8da4a4; font-size: 13px;">Số lượng: <strong style="color: #5df2d6;">@qty</strong></small>
                                 </div>
-                                <div style="color: #5df2d6; font-weight: 700;">@string.Format("{0:N0} đ", price * qty)</div>
+                                <div style="color: #5df2d6; font-weight: 700; font-size: 15px;">@string.Format("{0:N0} đ", price * qty)</div>
                             </div>
                         }
                     }
 
                     <div class="d-flex justify-content-between align-items-center mt-3 pt-3 mb-4" style="border-top: 1px solid #1e453e;">
-                        <div style="font-size: 16px; color: #8da4a4;">Tổng cộng:</div>
+                        <div style="font-size: 15px; color: #8da4a4; font-weight: 600;">Tổng thanh toán:</div>
                         <div style="font-size: 22px; font-weight: 800; color: #facc15;">@string.Format("{0:N0} đ", total)</div>
                     </div>
 
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-submit-order py-3">
-                            HOÀN TẤT ĐẶT HÀNG
+                        <button type="submit" class="btn btn-submit-order">
+                            <i class="bi bi-check-circle-fill"></i> HOÀN TẤT ĐẶT HÀNG
                         </button>
-                        <a href="/Cart" class="btn btn-outline-light py-2 opacity-75 text-center" style="font-size: 14px;">
+                        <a href="/Cart" class="btn btn-outline-light py-2 opacity-75 text-center mt-1" style="font-size: 14px; border-radius: 8px;">
                             ← Quay lại chỉnh giỏ hàng
                         </a>
                     </div>

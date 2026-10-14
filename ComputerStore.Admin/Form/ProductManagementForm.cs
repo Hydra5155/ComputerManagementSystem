@@ -1,11 +1,11 @@
 ﻿using ComputerStore.Admin.Services;
+using ComputerStore.Core.Entities;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -13,8 +13,9 @@ namespace ComputerStore.Admin.Forms
 {
     public partial class ProductManagementForm : Form
     {
+        private readonly ApiService _apiService;
         private readonly HttpClient _httpClient;
-        private List<ProductDto> _productList = new();
+        private List<Product> _productList = new();
         private int _selectedProductId = 0;
         private int? _selectedCategoryId = null;
 
@@ -23,10 +24,15 @@ namespace ComputerStore.Admin.Forms
             InitializeComponent();
             SetupCyberGridStyle();
 
-            // Port API backend
-            _httpClient = new HttpClient
+            _apiService = new ApiService();
+
+            var handler = new HttpClientHandler
             {
-                BaseAddress = new Uri("http://localhost:5293/api/")
+                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+            };
+            _httpClient = new HttpClient(handler)
+            {
+                BaseAddress = new Uri(ApiService.BaseUrl)
             };
         }
 
@@ -58,7 +64,7 @@ namespace ComputerStore.Admin.Forms
             OpenProductDetail();
         }
 
-        // Nút bấm "🔍 Xem chi tiết"
+        // Nút bấm "Xem chi tiết"
         private void btnViewDetail_Click(object sender, EventArgs e)
         {
             OpenProductDetail();
@@ -83,7 +89,18 @@ namespace ComputerStore.Admin.Forms
             var product = _productList.FirstOrDefault(p => p.ProductId == _selectedProductId);
             if (product != null)
             {
-                using var detailDialog = new ProductDetailDialog(product);
+                var dto = new ProductDto
+                {
+                    ProductId = product.ProductId,
+                    Name = product.Name,
+                    Price = product.Price,
+                    StockQuantity = product.StockQuantity,
+                    Description = product.Specifications,
+                    Specifications = product.Specifications,
+                    ImageUrl = product.ImageUrl,
+                    CategoryId = product.CategoryId
+                };
+                using var detailDialog = new ProductDetailDialog(dto);
                 detailDialog.ShowDialog(this);
             }
         }
@@ -92,25 +109,12 @@ namespace ComputerStore.Admin.Forms
         {
             try
             {
-                var response = await _httpClient.GetAsync("products");
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    _productList = JsonSerializer.Deserialize<List<ProductDto>>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    }) ?? new List<ProductDto>();
-
-                    RenderGrid();
-                }
-                else
-                {
-                    MessageBox.Show("Không thể tải danh sách sản phẩm từ API.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
+                _productList = await _apiService.GetProductsAsync();
+                RenderGrid();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi kết nối API: {ex.Message}\nHãy kiểm tra xem ComputerStore.API đã chạy trên cổng 5293 chưa.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Lỗi kết nối API: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -123,7 +127,7 @@ namespace ComputerStore.Admin.Forms
                 ? _productList
                 : _productList.Where(p =>
                     (p.Name != null && p.Name.ToLower().Contains(keyword)) ||
-                    (p.Description != null && p.Description.ToLower().Contains(keyword)) ||
+                    (p.Specifications != null && p.Specifications.ToLower().Contains(keyword)) ||
                     p.ProductId.ToString().Contains(keyword)
                 ).ToList();
 
@@ -134,7 +138,7 @@ namespace ComputerStore.Admin.Forms
                 Tên_Máy = p.Name,
                 Đơn_Giá = p.Price.ToString("N0") + " đ",
                 Tồn_Kho = p.StockQuantity,
-                Cấu_Hình = p.Description,
+                Cấu_Hình = p.Specifications,
                 Tình_Trạng = p.StockQuantity > 0 ? "Còn hàng" : "Hết hàng"
             }).ToList();
         }
@@ -150,11 +154,11 @@ namespace ComputerStore.Admin.Forms
                 if (item != null)
                 {
                     _selectedProductId = item.ProductId;
-                    _selectedCategoryId = item.CategoryId ?? 1;
+                    _selectedCategoryId = item.CategoryId;
                     if (txtName != null) txtName.Text = item.Name;
                     if (txtPrice != null) txtPrice.Text = item.Price.ToString("0");
                     if (numStock != null) numStock.Value = Math.Max(0, item.StockQuantity);
-                    if (txtSpecs != null) txtSpecs.Text = item.Description ?? "";
+                    if (txtSpecs != null) txtSpecs.Text = item.Specifications ?? "";
                     if (txtImageUrl != null) txtImageUrl.Text = item.ImageUrl ?? "";
                     LoadImagePreview(item.ImageUrl);
                 }
@@ -165,35 +169,23 @@ namespace ComputerStore.Admin.Forms
         {
             if (!ValidateInput(out decimal price)) return;
 
-            var payload = new ProductDto
+            var product = new Product
             {
                 ProductId = 0,
                 Name = txtName?.Text.Trim() ?? "",
                 Price = price,
                 StockQuantity = (int)(numStock?.Value ?? 0),
-                Description = txtSpecs?.Text.Trim() ?? "",
+                Specifications = txtSpecs?.Text.Trim() ?? "",
                 ImageUrl = txtImageUrl?.Text.Trim() ?? "",
                 CategoryId = _selectedCategoryId ?? 1
             };
 
-            try
+            bool success = await _apiService.AddProductAsync(product);
+            if (success)
             {
-                var response = await _httpClient.PostAsJsonAsync("products", payload);
-                if (response.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Thêm mới máy tính vào kho thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    ClearInputs();
-                    await LoadProductsAsync();
-                }
-                else
-                {
-                    var msg = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show($"Lỗi API:\n{msg}", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi kết nối: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Thêm mới máy tính vào kho thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ClearInputs();
+                await LoadProductsAsync();
             }
         }
 
@@ -210,7 +202,7 @@ namespace ComputerStore.Admin.Forms
             var currentItem = _productList.FirstOrDefault(p => p.ProductId == _selectedProductId);
             int categoryId = currentItem?.CategoryId ?? _selectedCategoryId ?? 1;
 
-            var payload = new ProductDto
+            var payload = new
             {
                 ProductId = _selectedProductId,
                 Name = txtName?.Text.Trim() ?? "",
@@ -232,7 +224,7 @@ namespace ComputerStore.Admin.Forms
                 else
                 {
                     var msg = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show($"Lỗi cập nhật kho:\n{msg}", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show($"Lỗi cập nhật kho (HTTP {(int)response.StatusCode}):\n{msg}", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)
@@ -252,23 +244,12 @@ namespace ComputerStore.Admin.Forms
             var confirm = MessageBox.Show($"Bạn có chắc chắn muốn xóa máy tính #{_selectedProductId} ({txtName?.Text}) không?", "Xác nhận xóa", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (confirm != DialogResult.Yes) return;
 
-            try
+            bool success = await _apiService.DeleteProductAsync(_selectedProductId);
+            if (success)
             {
-                var response = await _httpClient.DeleteAsync($"products/{_selectedProductId}");
-                if (response.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Xóa sản phẩm thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    ClearInputs();
-                    await LoadProductsAsync();
-                }
-                else
-                {
-                    MessageBox.Show("Không thể xóa (máy tính này đang tồn tại trong các đơn đặt hàng cũ).", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi kết nối: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Xóa sản phẩm thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ClearInputs();
+                await LoadProductsAsync();
             }
         }
 

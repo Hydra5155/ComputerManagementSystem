@@ -121,11 +121,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\LCB\\LCB_C#_DoAn_Demo\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Core\\ComputerStore.Core.csproj",
+      "projectUniqueName": "D:\\LCB\\LCB_C#_DoAn_Demo - Sao chép (2)\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Core\\ComputerStore.Core.csproj",
       "projectName": "ComputerStore.Core",
-      "projectPath": "D:\\LCB\\LCB_C#_DoAn_Demo\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Core\\ComputerStore.Core.csproj",
+      "projectPath": "D:\\LCB\\LCB_C#_DoAn_Demo - Sao chép (2)\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Core\\ComputerStore.Core.csproj",
       "packagesPath": "C:\\Users\\Chi Bao\\.nuget\\packages\\",
-      "outputPath": "D:\\LCB\\LCB_C#_DoAn_Demo\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Core\\obj\\",
+      "outputPath": "D:\\LCB\\LCB_C#_DoAn_Demo - Sao chép (2)\\ComputerManagementSystem\\ComputerStoreSystem.sln\\ComputerStore.Core\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

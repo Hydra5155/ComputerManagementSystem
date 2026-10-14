@@ -20,6 +20,14 @@ namespace ComputerStore.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // Chỉ định rõ tên bảng trong CSDL
+            modelBuilder.Entity<Order>().ToTable("Orders");
+            modelBuilder.Entity<OrderDetail>().ToTable("OrderDetails");
+            modelBuilder.Entity<Product>().ToTable("Products");
+            modelBuilder.Entity<Category>().ToTable("Categories");
+            modelBuilder.Entity<User>().ToTable("Users");
+            modelBuilder.Entity<Role>().ToTable("Roles");
+
             // Cấu hình kiểu dữ liệu tiền tệ decimal
             modelBuilder.Entity<Product>()
                 .Property(p => p.Price)
