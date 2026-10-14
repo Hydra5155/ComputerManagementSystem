@@ -154,17 +154,29 @@
             color: var(--neon-cyan);
         }
 
+<<<<<<< HEAD
     /* POPUP GỢI Ý */
+=======
+    /* POPUP GỢI Ý (FIX LỖI CUỘN XUỐNG THÊM) */
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
     #indexSuggestBox {
         background: var(--card-dark) !important;
         border: 1px solid var(--card-border) !important;
         box-shadow: 0 18px 45px rgba(0, 0, 0, 0.9) !important;
         z-index: 1060 !important;
         max-height: 380px !important;
+<<<<<<< HEAD
         overflow-y: auto !important;
         overscroll-behavior: contain;
     }
 
+=======
+        overflow-y: auto !important; /* Đảm bảo cho phép cuộn */
+        overscroll-behavior: contain;
+    }
+
+        /* Custom thanh cuộn neon */
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
         #indexSuggestBox::-webkit-scrollbar {
             width: 6px;
         }
@@ -252,6 +264,7 @@
         letter-spacing: 0.5px;
     }
 
+<<<<<<< HEAD
     .badge-cyber-stock {
         position: absolute;
         top: 12px;
@@ -275,6 +288,8 @@
         color: #fef08a;
     }
 
+=======
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
     .product-content {
         padding: 18px;
         display: flex;
@@ -390,6 +405,7 @@
 </style>
 
 <div class="container py-4">
+<<<<<<< HEAD
     @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-warning border-0 text-white mb-4" style="background: rgba(234, 179, 8, 0.15); border-left: 4px solid #eab308 !important;">
@@ -411,6 +427,22 @@
                 </form>
 
                 <!-- Popup kết quả gợi ý trực tiếp -->
+=======
+    <!-- KHUNG TÌM KIẾM LIỀN KỀ BỘ LỌC TRÒN -->
+    <div class="search-filter-bar">
+        <div class="d-flex align-items-center gap-2">
+            <!-- Khung tìm kiếm chính -->
+            <div class="flex-grow-1 position-relative">
+                <form method="get" asp-action="Index" class="search-cyber-box" id="mainSearchForm">
+                    <i class="bi bi-search me-2 fs-5" style="color: var(--neon-cyan);"></i>
+                    <input type="text" id="indexLiveSearch" name="query" value="@ViewBag.CurrentQuery"
+                           class="search-cyber-input"
+                           placeholder="Nhập tên máy, CPU, RTX, hoặc cấu hình cần tìm..." autocomplete="off" />
+                    <button type="submit" class="btn btn-search-cyber-submit">TÌM KIẾM</button>
+                </form>
+
+                <!-- Popup kết quả gợi ý trực tiếp (Cuộn mượt mà không bị kẹt) -->
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
                 <div id="indexSuggestBox" class="list-group position-absolute w-100 mt-2 rounded-3 overflow-hidden d-none"></div>
             </div>
 
@@ -421,7 +453,11 @@
                     <i class="bi bi-sliders2"></i>
                 </button>
 
+<<<<<<< HEAD
                 <!-- Bảng lọc popup nâng cao -->
+=======
+                <!-- Bảng lọc popup nâng cao với ràng buộc chặt chẽ -->
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
                 <div class="dropdown-menu dropdown-menu-end filter-dropdown-popup mt-2" aria-labelledby="filterPopupBtn">
                     <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
                         <span class="fw-bold" style="color: var(--neon-cyan); font-family: 'Orbitron', sans-serif; font-size: 0.85rem;">
@@ -459,7 +495,11 @@
                             </select>
                         </div>
 
+<<<<<<< HEAD
                         <!-- 3. Khoảng giá -->
+=======
+                        <!-- 3. Khoảng giá chặt chẽ -->
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
                         <div class="mb-2">
                             <label class="form-label">KHOẢNG GIÁ (VNĐ)</label>
                             <div class="row g-2">
@@ -509,6 +549,7 @@
                     <div class="product-card-cyber" onclick="location.href='@Url.Action("Detail", "Product", new { id = item.ProductId })'">
                         <div class="product-img-wrap">
                             <span class="badge-cyber-cat">@(item.Category?.Name ?? "HARDWARE")</span>
+<<<<<<< HEAD
 
                             @if (item.StockQuantity <= 0)
                             {
@@ -519,6 +560,8 @@
                                 <span class="badge-cyber-stock stock-low">CÒN @item.StockQuantity MÁY</span>
                             }
 
+=======
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
                             <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=600&q=80" : item.ImageUrl)"
                                  alt="@item.Name"
                                  onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=600&q=80';" />
@@ -593,11 +636,19 @@
 </div>
 
 <script>
+<<<<<<< HEAD
+=======
+    // Hàm gán khoảng giá nhanh
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
     function setPriceRange(min, max) {
         document.getElementById('filterMinPrice').value = min > 0 ? min : '';
         document.getElementById('filterMaxPrice').value = max > 0 ? max : '';
     }
 
+<<<<<<< HEAD
+=======
+    // Ràng buộc tính hợp lệ trước khi submit form lọc
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
     function validateFilterPrice() {
         const min = parseFloat(document.getElementById('filterMinPrice').value) || 0;
         const max = parseFloat(document.getElementById('filterMaxPrice').value) || 0;
@@ -607,6 +658,10 @@
             return false;
         }
 
+<<<<<<< HEAD
+=======
+        // Tự động hoán vị nếu min > max
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
         if (min > 0 && max > 0 && min > max) {
             document.getElementById('filterMinPrice').value = max;
             document.getElementById('filterMaxPrice').value = min;
@@ -614,6 +669,10 @@
         return true;
     }
 
+<<<<<<< HEAD
+=======
+    // Xử lý gợi ý tức thì và cuộn mượt mà
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
     document.addEventListener("DOMContentLoaded", function () {
         const input = document.getElementById("indexLiveSearch");
         const suggestBox = document.getElementById("indexSuggestBox");
@@ -649,6 +708,10 @@
                                     `;
                                 });
 
+<<<<<<< HEAD
+=======
+                                // Dòng nút bấm xem toàn bộ ở cuối danh sách cuộn
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
                                 html += `
                                     <div class="p-2 text-center border-top border-secondary border-opacity-25 bg-dark">
                                         <button type="button" class="btn btn-sm text-info fw-bold w-100" onclick="document.getElementById('mainSearchForm').submit();">
@@ -667,6 +730,10 @@
                 }, 200);
             });
 
+<<<<<<< HEAD
+=======
+            // Ẩn bảng khi bấm ra ngoài
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
             document.addEventListener("click", function (e) {
                 if (!input.contains(e.target) && !suggestBox.contains(e.target)) {
                     suggestBox.classList.add("d-none");

@@ -9,9 +9,17 @@
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
+<<<<<<< HEAD
     <!-- Tối ưu tỉ lệ hiển thị cho tất cả màn hình điện thoại di động -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>@ViewData["Title"] - BMDTStore Hệ Thống Máy Tính Cao Cấp</title>
+=======
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - BMDTStore Hệ Thống Máy Tính Cao Cấp</title>
+
+    <!-- Favicon BMDTStore -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235df2d6'><path d='M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z'/></svg>" />
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
 
     <!-- Favicon BMDTStore -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235df2d6'><path d='M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z'/></svg>" />
@@ -19,7 +27,11 @@
     <!-- Google Fonts: Inter & Plus Jakarta Sans (Chuẩn font như ảnh mẫu) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<<<<<<< HEAD
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+=======
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
 
     <!-- Bootstrap 5 & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -32,8 +44,13 @@
             --card-border: #1e453e;
             --neon-cyan: #5df2d6;
             --neon-glow: rgba(93, 242, 214, 0.35);
+<<<<<<< HEAD
             --text-main: #f8fafc;
             --text-sub: #cbd5e1;
+=======
+            --text-main: #f0fdfa;
+            --text-sub: #cce3de;
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
             --text-accent: #6ee7b7;
             /* Font chữ nét tròn dày, hiện đại theo ảnh mẫu */
             --font-family-base: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -76,9 +93,10 @@
 
         .navbar-brand-cyber {
             color: var(--neon-cyan) !important;
-            font-size: 1.45rem;
+            font-size: 1.5rem;
             font-weight: 800;
             text-shadow: 0 0 12px var(--neon-glow);
+<<<<<<< HEAD
             letter-spacing: -0.02em;
             text-decoration: none;
         }
@@ -123,6 +141,12 @@
         }
 
         /* Nút Người Dùng & Nút Giỏ Hàng */
+=======
+            letter-spacing: 1.5px;
+            text-decoration: none;
+        }
+
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
         .btn-cyber-user {
             border: 1px solid var(--card-border);
             background: rgba(20, 31, 33, 0.8);
@@ -275,10 +299,17 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navContent">
+<<<<<<< HEAD
                 <div class="d-flex align-items-center gap-3 ms-auto nav-mobile-group">
                     @if (currentCustomer != null)
                     {
                         <div class="dropdown w-100">
+=======
+                <div class="d-flex align-items-center gap-3 ms-auto">
+                    @if (currentCustomer != null)
+                    {
+                        <div class="dropdown">
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
                             <button class="btn btn-cyber-user px-3 py-2 dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person-check-fill text-success fs-5 me-2"></i>
                                 <span>@(currentCustomer.FullName.Length > 18 ? currentCustomer.FullName.Substring(0, 18) + "..." : currentCustomer.FullName)</span>
@@ -329,8 +360,13 @@
             <div class="row g-4">
                 <div class="col-md-5">
                     <h5 class="navbar-brand-cyber mb-3"><i class="bi bi-gpu-card me-2"></i> BMDTStore SYSTEM</h5>
+<<<<<<< HEAD
                     <p class="small opacity-75">Hệ thống phân phối Laptop Gaming, PC Modding và linh kiện phần cứng công nghệ cao.</p>
                     <p class="small mb-1"><i class="bi bi-geo-alt me-2 text-info"></i> 273 An Dương Vương, Phường 3, Quận 5, TP.HCM</p>
+=======
+                    <p class="small text-light opacity-75">Hệ thống phân phối Laptop Gaming, PC Modding và linh kiện phần cứng công nghệ cao.</p>
+                    <p class="small mb-1 text-light"><i class="bi bi-geo-alt me-2 text-info"></i> 273 An Dương Vương, Phường 3, Quận 5, TP.HCM</p>
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
                 </div>
                 <div class="col-md-3 col-6">
                     <h6 class="text-white fw-bold mb-3 text-uppercase">Dịch Vụ</h6>
@@ -346,7 +382,11 @@
                 </div>
             </div>
             <hr style="border-color: #1a3c35;" class="my-4" />
+<<<<<<< HEAD
             <div class="text-center small opacity-50">
+=======
+            <div class="text-center small text-light opacity-50">
+>>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
                 © 2026 BMDTStore COMPUTER SYSTEM. TOÀN BỘ BẢN QUYỀN ĐƯỢC BẢO LƯU.
             </div>
         </div>
