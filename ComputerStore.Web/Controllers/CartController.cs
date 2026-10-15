@@ -2,7 +2,13 @@
 using ComputerStore.Web.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace ComputerStore.Web.Controllers
 {
@@ -17,12 +23,30 @@ namespace ComputerStore.Web.Controllers
 
     public class CartController : Controller
     {
-        private const string CartSessionKey = "BMDT_CartSession_v1";
         private readonly IHttpClientFactory _httpClientFactory;
 
         public CartController(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
+        }
+
+        // HÀM LẤY SESSION KEY RIÊNG BIỆT THEO TỪNG TÀI KHOẢN ĐĂNG NHẬP
+        private string GetCartSessionKey()
+        {
+            var userJson = HttpContext.Session.GetString(AccountController.UserSessionKey);
+            if (!string.IsNullOrEmpty(userJson))
+            {
+                try
+                {
+                    var profile = JsonSerializer.Deserialize<ProfileViewModel>(userJson);
+                    if (profile != null && !string.IsNullOrWhiteSpace(profile.PhoneNumber))
+                    {
+                        return $"Cart_{profile.PhoneNumber.Trim()}";
+                    }
+                }
+                catch { }
+            }
+            return "Cart_Guest"; // Khách vãng lai chưa đăng nhập
         }
 
         private async Task<Product?> GetProductFromApiAsync(int productId)
@@ -91,7 +115,7 @@ namespace ComputerStore.Web.Controllers
             return View(cartItems);
         }
 
-        // THÊM SẢN PHẨM VÀO GIỎ HÀNG (HỖ TRỢ THÊM GIỎ & MUA NGAY)
+        // THÊM SẢN PHẨM VÀO GIỎ HÀNG (LƯU THEO TÀI KHOẢN)
         [HttpPost]
         [HttpGet]
         public async Task<IActionResult> AddToCart(int? productId, int? id, string? productName, decimal? price, string? imageUrl, int quantity = 1, string? returnUrl = null, bool buyNow = false)
@@ -122,7 +146,7 @@ namespace ComputerStore.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // 3. LƯU VÀO GIỎ HÀNG
+            // 3. LƯU VÀO GIỎ HÀNG RIÊNG CỦA TÀI KHOẢN
             var dtoList = GetDtoList();
             var item = dtoList.FirstOrDefault(x => x.ProductId == targetId);
 
@@ -163,7 +187,6 @@ namespace ComputerStore.Web.Controllers
 
             SaveDtoList(dtoList);
 
-            // Nếu bấm "MUA NGAY" -> Điều hướng thẳng đến trang Checkout, ngược lại về trang Giỏ hàng
             if (buyNow)
             {
                 return RedirectToAction("Checkout");
@@ -226,11 +249,11 @@ namespace ComputerStore.Web.Controllers
         [HttpGet]
         public IActionResult ClearCart()
         {
-            HttpContext.Session.Remove(CartSessionKey);
+            HttpContext.Session.Remove(GetCartSessionKey());
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Cart/Checkout - Trang thanh toán (Yêu cầu đăng nhập)
+        // GET: /Cart/Checkout - Trang thanh toán
         [HttpGet]
         public IActionResult Checkout()
         {
@@ -248,9 +271,9 @@ namespace ComputerStore.Web.Controllers
             return View(cartItems);
         }
 
-        // POST: /Cart/Checkout - LƯU ĐƠN VÀO DATABASE QUA WEB API (CHUẨN GIỜ VIỆT NAM UTC+7)
+        // POST: /Cart/Checkout - LƯU ĐƠN HÀNG
         [HttpPost]
-        public async Task<IActionResult> Checkout(string customerName, string customerPhone, string shippingAddress)
+        public async Task<IActionResult> Checkout(string customerName, string customerPhone, string shippingAddress, string paymentMethod = "COD")
         {
             var userJson = HttpContext.Session.GetString(AccountController.UserSessionKey);
             if (string.IsNullOrEmpty(userJson))
@@ -281,20 +304,29 @@ namespace ComputerStore.Web.Controllers
 
             string finalName = !string.IsNullOrWhiteSpace(customerName) ? customerName.Trim() : (!string.IsNullOrWhiteSpace(sessionFullName) ? sessionFullName : "Khách hàng");
             string finalPhone = !string.IsNullOrWhiteSpace(customerPhone) ? customerPhone.Trim() : (!string.IsNullOrWhiteSpace(sessionPhone) ? sessionPhone : sessionUsername);
-            string finalAddress = !string.IsNullOrWhiteSpace(shippingAddress) ? shippingAddress.Trim() : "Địa chỉ mặc định theo tài khoản";
+            string rawAddress = !string.IsNullOrWhiteSpace(shippingAddress) ? shippingAddress.Trim() : "Địa chỉ mặc định theo tài khoản";
+
+            string paymentText = paymentMethod switch
+            {
+                "BANKING" => "Chuyển khoản (VietQR 24/7)",
+                "VNPAY" => "VNPAY / Thẻ ATM",
+                _ => "Thanh toán khi nhận hàng (COD)"
+            };
+
+            string finalDeliveryAddress = $"{rawAddress} [PTTT: {paymentText}]";
 
             try
             {
                 var client = _httpClientFactory.CreateClient("StoreAPI");
 
-                // Đóng gói Payload đơn hàng (Ép chuẩn giờ Việt Nam UTC+7)
                 var orderPayload = new
                 {
                     Username = sessionUsername,
                     CustomerName = finalName,
                     CustomerPhone = finalPhone,
-                    DeliveryAddress = finalAddress,
-                    CustomerAddress = finalAddress,
+                    DeliveryAddress = finalDeliveryAddress,
+                    CustomerAddress = rawAddress,
+                    PaymentMethod = paymentText,
                     OrderDate = DateTime.UtcNow.AddHours(7),
                     TotalAmount = dtoList.Sum(x => x.Price * x.Quantity),
                     Status = "Chờ xử lý",
@@ -307,11 +339,12 @@ namespace ComputerStore.Web.Controllers
 
                 var jsonContent = new StringContent(
                     JsonSerializer.Serialize(orderPayload),
-                    System.Text.Encoding.UTF8,
+                    Encoding.UTF8,
                     "application/json"
                 );
 
                 var response = await client.PostAsync("orders", jsonContent);
+                HttpResponseMessage finalResponse = response;
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -323,12 +356,27 @@ namespace ComputerStore.Web.Controllers
                         var items = ConvertToCartItems(dtoList);
                         return View(items);
                     }
+                    finalResponse = fallbackResponse;
                 }
 
-                // Xóa giỏ hàng sau khi đặt thành công
-                HttpContext.Session.Remove(CartSessionKey);
-                TempData["SuccessMessage"] = "Đặt hàng thành công!";
-                return RedirectToAction(nameof(OrderSuccess));
+                string createdOrderId = "";
+                try
+                {
+                    var respJson = await finalResponse.Content.ReadAsStringAsync();
+                    using var respDoc = JsonDocument.Parse(respJson);
+                    if (respDoc.RootElement.TryGetProperty("orderId", out var oidProp) ||
+                        respDoc.RootElement.TryGetProperty("OrderId", out oidProp))
+                    {
+                        createdOrderId = $" #{oidProp}";
+                    }
+                }
+                catch { }
+
+                // Xóa giỏ hàng riêng của tài khoản sau khi đặt thành công
+                HttpContext.Session.Remove(GetCartSessionKey());
+
+                TempData["OrderSuccessToast"] = $"Đặt hàng thành công! Đơn hàng{createdOrderId} của bạn đang được xử lý.";
+                return RedirectToAction("Index", "Product");
             }
             catch (Exception ex)
             {
@@ -338,16 +386,10 @@ namespace ComputerStore.Web.Controllers
             }
         }
 
-        [HttpGet]
-        public IActionResult OrderSuccess()
-        {
-            return View();
-        }
-
         // --- CÁC HÀM PHỤ TRỢ NỘI BỘ ---
         private List<CartDtoItem> GetDtoList()
         {
-            var json = HttpContext.Session.GetString(CartSessionKey);
+            var json = HttpContext.Session.GetString(GetCartSessionKey());
             if (string.IsNullOrEmpty(json)) return new List<CartDtoItem>();
 
             try
@@ -362,7 +404,7 @@ namespace ComputerStore.Web.Controllers
 
         private void SaveDtoList(List<CartDtoItem> list)
         {
-            HttpContext.Session.SetString(CartSessionKey, JsonSerializer.Serialize(list));
+            HttpContext.Session.SetString(GetCartSessionKey(), JsonSerializer.Serialize(list));
         }
 
         private List<CartItem> ConvertToCartItems(List<CartDtoItem> dtoList)

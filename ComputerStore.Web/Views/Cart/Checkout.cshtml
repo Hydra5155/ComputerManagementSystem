@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<ComputerStore.Web.Models.CartItem>
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 @{
-    ViewData["Title"] = "Thanh toán đơn hàng - DTBStore";
+    ViewData["Title"] = "Thanh toán đơn hàng - BMDTStore";
 
     // Tự động đọc dữ liệu khách hàng từ Session để điền sẵn
     var userJson = HttpContextAccessor.HttpContext?.Session.GetString(ComputerStore.Web.Controllers.AccountController.UserSessionKey);
@@ -61,6 +61,31 @@
         -webkit-font-smoothing: antialiased;
     }
 
+    /* NÚT QUAY LẠI TRÒN CÓ MŨI TÊN QUAY NGƯỢC BÊN TRÁI */
+    .btn-back-circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(93, 242, 214, 0.08);
+        border: 1.5px solid #5df2d6;
+        color: #5df2d6;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-size: 19px;
+        transition: all 0.25s ease;
+        box-shadow: 0 0 10px rgba(93, 242, 214, 0.15);
+        flex-shrink: 0;
+    }
+
+        .btn-back-circle:hover {
+            background: #5df2d6;
+            color: #080c0d;
+            box-shadow: 0 0 16px rgba(93, 242, 214, 0.4);
+            transform: scale(1.08);
+        }
+
     .checkout-card {
         background-color: var(--dark-card);
         border: 1.5px solid var(--dark-border);
@@ -75,6 +100,8 @@
         font-size: 26px;
         letter-spacing: -0.02em;
         margin-bottom: 24px;
+        display: flex;
+        align-items: center;
     }
 
     /* NHÃN VÀ Ô NHẬP LIỆU NỔI BẬT */
@@ -123,7 +150,44 @@
         display: block;
     }
 
-    /* KHỐI LƯU Ý GIAO HÀNG (CHUẨN THEO ẢNH MẪU) */
+    /* PHƯƠNG THỨC THANH TOÁN */
+    .payment-option-card {
+        background: #111a1b;
+        border: 1.5px solid var(--dark-border);
+        border-radius: 10px;
+        padding: 14px 16px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+        .payment-option-card:hover {
+            border-color: rgba(93, 242, 214, 0.5);
+            background: #142526;
+        }
+
+    .payment-radio:checked + .payment-option-card {
+        border-color: var(--neon-teal);
+        background: rgba(93, 242, 214, 0.08);
+        box-shadow: 0 0 14px rgba(93, 242, 214, 0.25);
+    }
+
+    .payment-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        background: rgba(93, 242, 214, 0.12);
+        color: var(--neon-teal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    /* KHỐI LƯU Ý GIAO HÀNG */
     .delivery-notice-box {
         background: #121c1e;
         border-left: 4px solid var(--neon-teal);
@@ -150,7 +214,7 @@
 
         .delivery-notice-box li {
             color: #e2e8f0;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
     .delivery-notice-footer {
@@ -158,6 +222,8 @@
         font-size: 13.5px;
         font-weight: 500;
         margin-top: 6px;
+        padding-top: 8px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.1);
     }
 
     /* NÚT HOÀN TẤT ĐẶT HÀNG */
@@ -184,46 +250,51 @@
             transform: translateY(-2px);
         }
 
-    /* TỐI ƯU GIAO DIỆN CHO ĐIỆN THOẠI (RESPONSIVE) */
     @@media (max-width: 768px) {
-        .checkout-card {
-            padding: 18px;
-            border-radius: 12px;
-        }
+        .checkout-card
 
-        .checkout-title {
-            font-size: 20px;
-            margin-bottom: 18px;
-        }
+    {
+        padding: 18px;
+        border-radius: 12px;
+    }
 
-        .form-control-cyber {
-            font-size: 16px !important; /* Tránh zoom ngoài ý muốn trên iOS */
-            padding: 12px 14px !important;
-        }
+    .checkout-title {
+        font-size: 20px;
+        margin-bottom: 18px;
+    }
 
-        .delivery-notice-box {
-            padding: 14px 16px;
-            font-size: 13.5px;
-        }
+    .form-control-cyber {
+        font-size: 16px !important;
+        padding: 12px 14px !important;
+    }
 
-        .btn-submit-order {
-            padding: 14px;
-            font-size: 15px;
-        }
+    .delivery-notice-box {
+        padding: 14px 16px;
+        font-size: 13.5px;
+    }
+
+    .btn-submit-order {
+        padding: 14px;
+        font-size: 15px;
+    }
+
     }
 </style>
 
 <div class="container py-4">
-    <!-- NÚT QUAY LẠI -->
-    <a href="/Cart" style="color: #5df2d6; text-decoration: none; font-weight: 700; font-size: 14px; margin-bottom: 22px; display: inline-flex; align-items: center; gap: 6px; transition: transform 0.2s;" onmouseover="this.style.transform='translateX(-3px)'" onmouseout="this.style.transform='none'">
-        <i class="bi bi-arrow-left"></i> Quay lại giỏ hàng
-    </a>
-
-    <h2 class="checkout-title">⚡ XÁC NHẬN THANH TOÁN & ĐẶT HÀNG</h2>
+    <!-- NÚT QUAY LẠI HÌNH TRÒN BÊN TRÁI -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="/Cart" class="btn-back-circle" title="Quay lại giỏ hàng">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="checkout-title m-0">
+            XÁC NHẬN THANH TOÁN &amp; ĐẶT HÀNG
+        </h2>
+    </div>
 
     <form asp-controller="Cart" asp-action="Checkout" method="post">
         <div class="row g-4">
-            <!-- CỘT THÔNG TIN GIAO HÀNG -->
+            <!-- CỘT THÔNG TIN GIAO HÀNG & PHƯƠNG THỨC THANH TOÁN -->
             <div class="col-lg-7">
                 <div class="checkout-card">
                     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
@@ -270,19 +341,74 @@
                               placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..." required>@(customer?.Address ?? "")</textarea>
                     <small class="field-hint">Ghi rõ số nhà, tòa chung cư, số phòng để việc giao máy được chuẩn xác.</small>
 
-                    <!-- KHUNG LƯU Ý GIAO HÀNG (THEO MẪU ẢNH CỦA BẠN) -->
+                    <!-- CỤM PHƯƠNG THỨC THANH TOÁN -->
+                    <label class="field-label mt-2">
+                        <i class="bi bi-credit-card-2-front-fill"></i> Phương thức thanh toán:
+                    </label>
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        <!-- Option 1: COD -->
+                        <label class="position-relative m-0">
+                            <input type="radio" name="paymentMethod" value="COD" class="payment-radio d-none" checked />
+                            <div class="payment-option-card">
+                                <div class="payment-icon">
+                                    <i class="bi bi-cash-stack"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div style="font-weight: 700; color: #ffffff; font-size: 14.5px;">Thanh toán khi nhận hàng (COD)</div>
+                                    <div style="font-size: 12.5px; color: #94a3b8;">Được đồng kiểm, cắm điện test màn hình và máy trước khi thanh toán.</div>
+                                </div>
+                                <i class="bi bi-check2-circle fs-4" style="color: var(--neon-teal);"></i>
+                            </div>
+                        </label>
+
+                        <!-- Option 2: VietQR -->
+                        <label class="position-relative m-0">
+                            <input type="radio" name="paymentMethod" value="BANKING" class="payment-radio d-none" />
+                            <div class="payment-option-card">
+                                <div class="payment-icon">
+                                    <i class="bi bi-qr-code-scan"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div style="font-weight: 700; color: #ffffff; font-size: 14.5px;">Chuyển khoản Ngân hàng (Quét mã VietQR 24/7)</div>
+                                    <div style="font-size: 12.5px; color: #94a3b8;">Tự động xác nhận đơn hàng qua Internet Banking, miễn phí giao dịch.</div>
+                                </div>
+                                <i class="bi bi-check2-circle fs-4" style="color: var(--neon-teal);"></i>
+                            </div>
+                        </label>
+
+                        <!-- Option 3: Thẻ ATM / VNPAY -->
+                        <label class="position-relative m-0">
+                            <input type="radio" name="paymentMethod" value="VNPAY" class="payment-radio d-none" />
+                            <div class="payment-option-card">
+                                <div class="payment-icon">
+                                    <i class="bi bi-wallet2"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div style="font-weight: 700; color: #ffffff; font-size: 14.5px;">Cổng thanh toán điện tử (Thẻ ATM / Visa / VNPAY)</div>
+                                    <div style="font-size: 12.5px; color: #94a3b8;">Hỗ trợ trả góp 0% thẻ tín dụng và thanh toán qua ví VNPAY.</div>
+                                </div>
+                                <i class="bi bi-check2-circle fs-4" style="color: var(--neon-teal);"></i>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- KHUNG LƯU Ý GIAO HÀNG -->
                     <div class="delivery-notice-box">
-                        <strong class="title-region">Tại Miền Nam:</strong>
+                        <strong class="title-region">
+                            <i class="bi bi-geo-alt-fill me-1" style="color: var(--neon-teal);"></i> Tại Miền Nam &amp; TP.HCM:
+                        </strong>
                         <ul>
-                            <li>8h00 – 14h00 đối với hàng điện máy / laptop</li>
-                            <li>8h00 – 16h00 đối với hàng thực phẩm / phụ kiện</li>
+                            <li><strong>Laptop Gaming &amp; Văn phòng:</strong> Giao hỏa tốc trong 2 giờ sau khi đặt hàng (8h00 – 16h00).</li>
+                            <li><strong>PC Gaming &amp; Workstation:</strong> Kỹ thuật viên giao tận nơi, hỗ trợ lắp ráp, cắm nguồn và test màn hình miễn phí (8h00 – 17h00).</li>
                         </ul>
-                        <strong class="title-region">Tại Miền Bắc:</strong>
+                        <strong class="title-region">
+                            <i class="bi bi-truck me-1" style="color: var(--neon-teal);"></i> Tại Miền Bắc &amp; Các tỉnh khác:
+                        </strong>
                         <ul>
-                            <li>Từ 8h00 – 16h00</li>
+                            <li>Giao hàng từ 8h00 – 16h00 qua đơn vị chuyển phát có bảo hiểm 100%, đóng thùng xốp chống sốc nguyên khối bảo vệ card đồ họa và linh kiện.</li>
                         </ul>
                         <div class="delivery-notice-footer">
-                            <strong>Lưu ý:</strong> Khách đặt hàng từ 8h00 – 16h00: giao hàng trong ngày. Khách đặt hàng sau 16h00: giao hàng ngày hôm sau.
+                            <i class="bi bi-clock-history me-1"></i> <strong>Lưu ý:</strong> Khách đặt hàng từ 8h00 – 16h00: tiến hành kiểm tra phần cứng (burn-in test) và giao trong ngày. Khách đặt hàng sau 16h00: giao hàng ngày hôm sau.
                         </div>
                     </div>
                 </div>
@@ -314,23 +440,20 @@
                                     <div style="font-weight: 600; color: #fff; font-size: 14.5px; line-height: 1.4;">@name</div>
                                     <small style="color: #8da4a4; font-size: 13px;">Số lượng: <strong style="color: #5df2d6;">@qty</strong></small>
                                 </div>
-                                <div style="color: #5df2d6; font-weight: 700; font-size: 15px;">@string.Format("{0:N0} đ", price * qty)</div>
+                                <div style="color: #5df2d6; font-weight: 700; font-size: 15px; white-space: nowrap;">@string.Format("{0:N0} đ", price * qty)</div>
                             </div>
                         }
                     }
 
                     <div class="d-flex justify-content-between align-items-center mt-3 pt-3 mb-4" style="border-top: 1px solid #1e453e;">
                         <div style="font-size: 15px; color: #8da4a4; font-weight: 600;">Tổng thanh toán:</div>
-                        <div style="font-size: 22px; font-weight: 800; color: #facc15;">@string.Format("{0:N0} đ", total)</div>
+                        <div style="font-size: 22px; font-weight: 800; color: #facc15; white-space: nowrap;">@string.Format("{0:N0} đ", total)</div>
                     </div>
 
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-submit-order">
                             <i class="bi bi-check-circle-fill"></i> HOÀN TẤT ĐẶT HÀNG
                         </button>
-                        <a href="/Cart" class="btn btn-outline-light py-2 opacity-75 text-center mt-1" style="font-size: 14px; border-radius: 8px;">
-                            ← Quay lại chỉnh giỏ hàng
-                        </a>
                     </div>
                 </div>
             </div>

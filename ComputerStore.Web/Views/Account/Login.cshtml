@@ -10,13 +10,38 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
+    /* NÚT QUAY LẠI TRÒN CÓ MŨI TÊN QUAY NGƯỢC BÊN TRÁI */
+    .btn-back-circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(93, 242, 214, 0.08);
+        border: 1.5px solid #5df2d6;
+        color: #5df2d6;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-size: 19px;
+        transition: all 0.25s ease;
+        box-shadow: 0 0 10px rgba(93, 242, 214, 0.15);
+        flex-shrink: 0;
+    }
+
+        .btn-back-circle:hover {
+            background: #5df2d6;
+            color: #080c0d;
+            box-shadow: 0 0 16px rgba(93, 242, 214, 0.4);
+            transform: scale(1.08);
+        }
+
     .auth-card {
         background-color: #0e1516;
         border: 1px solid #1e453e;
         border-radius: 12px;
         padding: 35px;
         max-width: 440px;
-        margin: 40px auto;
+        margin: 20px auto 40px auto;
         box-shadow: 0 0 30px rgba(93, 242, 214, 0.12);
     }
 
@@ -121,8 +146,15 @@
     }
 </style>
 
-<div class="container py-4">
-    <div class="auth-card">
+<div class="container py-4" style="max-width: 520px;">
+    <!-- NÚT TRÒN QUAY LẠI BÊN TRÁI -->
+    <div class="mb-3">
+        <a href="/Product" class="btn-back-circle" title="Quay lại cửa hàng">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+    </div>
+
+    <div class="auth-card m-0 w-100" style="max-width: 100%;">
         <div class="text-center mb-4">
             <h2 style="color: #5df2d6; font-weight: 800; letter-spacing: 1px;">⚡ ĐĂNG NHẬP</h2>
             <p style="color: #8da4a4; font-size: 13.5px;">Chào mừng bạn trở lại với hệ sinh thái DTBStore</p>

@@ -1,10 +1,38 @@
 ﻿using ComputerStore.Web.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace ComputerStore.Web.Controllers
 {
+    // DTO tiếp nhận dữ liệu lịch sử đơn hàng từ API
+    public class CustomerOrderHistoryDto
+    {
+        public int OrderId { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
+        public string CustomerPhone { get; set; } = string.Empty;
+        public string DeliveryAddress { get; set; } = string.Empty;
+        public DateTime OrderDate { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string Status { get; set; } = "Chờ xử lý";
+        public List<CustomerOrderDetailDto> OrderDetails { get; set; } = new();
+    }
+
+    public class CustomerOrderDetailDto
+    {
+        public int OrderDetailId { get; set; }
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal TotalPrice { get; set; }
+    }
+
     public class AccountController : Controller
     {
         public const string UserSessionKey = "DTB_CustomerUser";
@@ -34,7 +62,6 @@ namespace ComputerStore.Web.Controllers
             {
                 var client = _httpClientFactory.CreateClient("StoreAPI");
 
-                // Gửi payload xác thực đăng nhập tới API Users
                 var loginPayload = new
                 {
                     Username = model.Username.Trim(),
@@ -67,7 +94,6 @@ namespace ComputerStore.Web.Controllers
                     return View(model);
                 }
 
-                // Lưu thông tin người dùng vào Session
                 HttpContext.Session.SetString(UserSessionKey, JsonSerializer.Serialize(loggedCustomer));
                 TempData["SuccessMessage"] = $"Đăng nhập thành công! Chào mừng {loggedCustomer.FullName}.";
 
@@ -136,7 +162,7 @@ namespace ComputerStore.Web.Controllers
             }
         }
 
-        // GET: /Account/Profile
+        // GET: /Account/Profile - HIỂN THỊ HỒ SƠ CÁ NHÂN
         [HttpGet]
         public IActionResult Profile()
         {
@@ -157,8 +183,24 @@ namespace ComputerStore.Web.Controllers
             if (!ModelState.IsValid) return View(model);
 
             HttpContext.Session.SetString(UserSessionKey, JsonSerializer.Serialize(model));
-            TempData["SuccessMessage"] = "Cập nhật thông tin thành công!";
+            TempData["SuccessMessage"] = "Cập nhật thông tin cá nhân thành công!";
             return View(model);
+        }
+
+        // GET: /Account/Orders - TRANG QUẢN LÝ THÔNG TIN ĐƠN HÀNG RIÊNG BIỆT
+        [HttpGet]
+        public async Task<IActionResult> Orders()
+        {
+            var userJson = HttpContext.Session.GetString(UserSessionKey);
+            if (string.IsNullOrEmpty(userJson))
+            {
+                return RedirectToAction("Login", new { returnUrl = "/Account/Orders" });
+            }
+
+            var profile = JsonSerializer.Deserialize<ProfileViewModel>(userJson) ?? new ProfileViewModel();
+            ViewBag.Orders = await FetchCustomerOrdersAsync(profile);
+
+            return View(profile);
         }
 
         // GET: /Account/Logout
@@ -213,6 +255,43 @@ namespace ComputerStore.Web.Controllers
                 ModelState.AddModelError("", $"Lỗi kết nối: {ex.Message}");
                 return View(model);
             }
+        }
+
+        // HÀM TRỢ GIÚP: Truy vấn đơn hàng của khách từ API
+        private async Task<List<CustomerOrderHistoryDto>> FetchCustomerOrdersAsync(ProfileViewModel profile)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("StoreAPI");
+                string queryParam = !string.IsNullOrWhiteSpace(profile.PhoneNumber)
+                    ? $"customerPhone={Uri.EscapeDataString(profile.PhoneNumber.Trim())}"
+                    : (!string.IsNullOrWhiteSpace(profile.FullName) ? $"search={Uri.EscapeDataString(profile.FullName.Trim())}" : "");
+
+                var response = await client.GetAsync($"orders{(string.IsNullOrEmpty(queryParam) ? "" : $"?{queryParam}")}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var ordersJson = await response.Content.ReadAsStringAsync();
+                    var allOrders = JsonSerializer.Deserialize<List<CustomerOrderHistoryDto>>(ordersJson, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (allOrders != null && allOrders.Any())
+                    {
+                        return allOrders.Where(o =>
+                            (!string.IsNullOrWhiteSpace(profile.PhoneNumber) && o.CustomerPhone != null && o.CustomerPhone.Contains(profile.PhoneNumber.Trim())) ||
+                            (!string.IsNullOrWhiteSpace(profile.Email) && o.CustomerPhone != null && o.CustomerPhone.Equals(profile.Email.Trim(), StringComparison.OrdinalIgnoreCase)) ||
+                            (!string.IsNullOrWhiteSpace(profile.FullName) && o.CustomerName != null && o.CustomerName.Equals(profile.FullName.Trim(), StringComparison.OrdinalIgnoreCase))
+                        )
+                        .OrderByDescending(o => o.OrderId)
+                        .ToList();
+                    }
+                }
+            }
+            catch { }
+
+            return new List<CustomerOrderHistoryDto>();
         }
     }
 }
