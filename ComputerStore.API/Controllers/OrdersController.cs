@@ -49,8 +49,9 @@ namespace ComputerStore.API.Controllers
                                              o.OrderId.ToString().Contains(kw));
                 }
 
+                // SẮP XẾP CHUẨN XÁC: Luôn sắp xếp theo OrderId giảm dần (Đơn mới nhất 16, 15, 14... lên đầu bảng)
                 var rawOrders = await query
-                    .OrderByDescending(o => o.OrderDate)
+                    .OrderByDescending(o => o.OrderId)
                     .ToListAsync();
 
                 var orders = rawOrders.Select(o =>
@@ -229,7 +230,7 @@ namespace ComputerStore.API.Controllers
                     CustomerName = finalCustomerName,
                     CustomerPhone = finalCustomerPhone,
                     DeliveryAddress = finalDeliveryAddress,
-                    OrderDate = DateTime.Now,
+                    OrderDate = DateTime.UtcNow.AddHours(7), // Chuẩn hóa múi giờ Việt Nam (UTC+7)
                     TotalAmount = calculatedTotal,
                     Status = "Chờ xử lý",
                     OrderDetails = detailsToInsert
@@ -339,10 +340,10 @@ namespace ComputerStore.API.Controllers
                 {
                     foreach (var detail in order.OrderDetails)
                     {
-                        var prod = await _context.Products.FindAsync(detail.ProductId);
-                        if (prod != null)
+                        var product = await _context.Products.FindAsync(detail.ProductId);
+                        if (product != null)
                         {
-                            prod.StockQuantity += detail.Quantity;
+                            product.StockQuantity += detail.Quantity;
                         }
                     }
                 }

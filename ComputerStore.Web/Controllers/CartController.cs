@@ -91,10 +91,10 @@ namespace ComputerStore.Web.Controllers
             return View(cartItems);
         }
 
-        // THÊM SẢN PHẨM VÀO GIỎ HÀNG (YÊU CẦU BẮT BUỘC ĐĂNG NHẬP)
+        // THÊM SẢN PHẨM VÀO GIỎ HÀNG (HỖ TRỢ THÊM GIỎ & MUA NGAY)
         [HttpPost]
         [HttpGet]
-        public async Task<IActionResult> AddToCart(int? productId, int? id, string? productName, decimal? price, string? imageUrl, int quantity = 1, string? returnUrl = null)
+        public async Task<IActionResult> AddToCart(int? productId, int? id, string? productName, decimal? price, string? imageUrl, int quantity = 1, string? returnUrl = null, bool buyNow = false)
         {
             int targetId = productId ?? id ?? 0;
             if (targetId <= 0) return RedirectToAction("Index", "Product");
@@ -162,6 +162,12 @@ namespace ComputerStore.Web.Controllers
             }
 
             SaveDtoList(dtoList);
+
+            // Nếu bấm "MUA NGAY" -> Điều hướng thẳng đến trang Checkout, ngược lại về trang Giỏ hàng
+            if (buyNow)
+            {
+                return RedirectToAction("Checkout");
+            }
             return RedirectToAction(nameof(Index));
         }
 
@@ -242,7 +248,7 @@ namespace ComputerStore.Web.Controllers
             return View(cartItems);
         }
 
-        // POST: /Cart/Checkout - LƯU ĐƠN VÀO DATABASE QUA WEB API
+        // POST: /Cart/Checkout - LƯU ĐƠN VÀO DATABASE QUA WEB API (CHUẨN GIỜ VIỆT NAM UTC+7)
         [HttpPost]
         public async Task<IActionResult> Checkout(string customerName, string customerPhone, string shippingAddress)
         {
@@ -281,7 +287,7 @@ namespace ComputerStore.Web.Controllers
             {
                 var client = _httpClientFactory.CreateClient("StoreAPI");
 
-                // Đóng gói Payload đơn hàng
+                // Đóng gói Payload đơn hàng (Ép chuẩn giờ Việt Nam UTC+7)
                 var orderPayload = new
                 {
                     Username = sessionUsername,
@@ -289,7 +295,7 @@ namespace ComputerStore.Web.Controllers
                     CustomerPhone = finalPhone,
                     DeliveryAddress = finalAddress,
                     CustomerAddress = finalAddress,
-                    OrderDate = DateTime.Now,
+                    OrderDate = DateTime.UtcNow.AddHours(7),
                     TotalAmount = dtoList.Sum(x => x.Price * x.Quantity),
                     Status = "Chờ xử lý",
                     OrderDetails = dtoList.Select(item => new
@@ -309,7 +315,6 @@ namespace ComputerStore.Web.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    // Thử gọi fallback endpoint nếu endpoint "orders" thất bại
                     var fallbackResponse = await client.PostAsync("Orders/create", jsonContent);
                     if (!fallbackResponse.IsSuccessStatusCode)
                     {

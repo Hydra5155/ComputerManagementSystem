@@ -76,6 +76,7 @@
             border-color: rgba(93, 242, 214, 0.4);
         }
 
+    /* KHUNG ẢNH CHÍNH CÓ NHÃN NỔI Z-INDEX CAO */
     .detail-img-box {
         background: radial-gradient(circle at center, #142224 0%, #080c0d 100%);
         border: 1px solid var(--dark-border);
@@ -94,12 +95,73 @@
             max-width: 100%;
             object-fit: contain;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 1;
         }
 
         .detail-img-box:hover img {
             transform: scale(1.06);
         }
 
+    /* NHÃN GÓC PHẢI TRÊN KHUNG ẢNH LUÔN NỔI (Z-INDEX 30) */
+    .detail-floating-stock {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        z-index: 30 !important;
+        font-size: 11.5px;
+        font-weight: 800;
+        padding: 6px 14px;
+        border-radius: 8px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.95);
+        pointer-events: none;
+    }
+
+    /* CÁC PHÂN LOẠI MÀU NHÃN */
+    .stock-out {
+        background: rgba(45, 10, 15, 0.95) !important;
+        border: 1.5px solid #ff4d6d !important;
+        color: #ff758f !important;
+    }
+
+    .stock-last-one {
+        background: linear-gradient(135deg, #ff3b00 0%, #ff0055 100%) !important;
+        border: 1.5px solid #ffe600 !important;
+        color: #ffffff !important;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+        box-shadow: 0 0 20px rgba(255, 59, 0, 0.9), 0 4px 14px rgba(0, 0, 0, 0.9) !important;
+        animation: pulseLastOneDetail 1.4s infinite ease-in-out;
+    }
+
+    .stock-low {
+        background: rgba(45, 35, 8, 0.95) !important;
+        border: 1.5px solid #ffc300 !important;
+        color: #ffd60a !important;
+    }
+
+    .stock-available {
+        background: rgba(6, 40, 28, 0.95) !important;
+        border: 1.5px solid #00f5d4 !important;
+        color: #00f5d4 !important;
+    }
+
+    @@keyframes pulseLastOneDetail {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 14px rgba(255, 59, 0, 0.8);
+        }
+
+        50% {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 230, 0, 1);
+        }
+    }
+
+    /* NHÃN THÔNG TIN CHI TIẾT */
     .badge-code {
         background: rgba(93, 242, 214, 0.1);
         border: 1px solid #206153;
@@ -119,6 +181,16 @@
         padding: 6px 12px;
         border-radius: 6px;
         font-weight: 600;
+    }
+
+    .badge-stock-pill {
+        font-size: 12px;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        letter-spacing: 0.3px;
     }
 
     .detail-title {
@@ -150,7 +222,7 @@
         margin-bottom: 26px;
     }
 
-    /* KHỐI LƯU Ý GIAO HÀNG (THEO MẪU ẢNH) */
+    /* KHỐI LƯU Ý GIAO HÀNG */
     .delivery-notice-box {
         background: #121c1e;
         border-left: 4px solid var(--neon-teal);
@@ -186,7 +258,7 @@
         margin-top: 6px;
     }
 
-    /* Ô NHẬP LIỆU */
+    /* Ô NHẬP SỐ LƯỢNG */
     .qty-input-detail {
         background-color: var(--dark-input);
         border: 1.5px solid var(--dark-border);
@@ -206,15 +278,39 @@
             box-shadow: 0 0 12px rgba(93, 242, 214, 0.35);
         }
 
+    /* NÚT THÊM VÀO GIỎ HÀNG */
+    .btn-add-to-cart-detail {
+        background: rgba(93, 242, 214, 0.12);
+        border: 1.5px solid var(--neon-teal);
+        color: var(--neon-teal);
+        font-weight: 700;
+        padding: 12px 22px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14.5px;
+        transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-add-to-cart-detail:hover {
+            background: var(--neon-teal);
+            color: #080c0d;
+            box-shadow: 0 0 20px rgba(93, 242, 214, 0.55);
+            transform: translateY(-2px);
+        }
+
+    /* NÚT MUA NGAY */
     .btn-buy-detail {
         background: linear-gradient(135deg, #00897b, #004d40);
         border: 1.5px solid var(--neon-teal);
         color: #ffffff;
         font-weight: 700;
-        padding: 12px 34px;
+        padding: 12px 28px;
         border-radius: 8px;
         cursor: pointer;
-        font-size: 15px;
+        font-size: 14.5px;
         transition: all 0.25s ease;
         display: inline-flex;
         align-items: center;
@@ -263,7 +359,7 @@
         border: 1px solid var(--dark-border);
         color: #94a3b8;
         font-weight: 600;
-        padding: 12px 24px;
+        padding: 12px 20px;
         border-radius: 8px;
         text-decoration: none;
         display: inline-flex;
@@ -277,7 +373,6 @@
             background: #19282b;
         }
 
-    /* TỐI ƯU CHO MOBILE */
     @@media (max-width: 768px) {
         .detail-card {
             padding: 20px;
@@ -291,21 +386,7 @@
             font-size: 26px;
         }
 
-        .detail-img-box {
-            min-height: 280px;
-            padding: 16px;
-        }
-
-            .detail-img-box img {
-                max-height: 240px;
-            }
-
-        .delivery-notice-box {
-            padding: 14px 16px;
-            font-size: 13.5px;
-        }
-
-        .btn-buy-detail, .btn-login-to-buy, .btn-back {
+        .btn-add-to-cart-detail, .btn-buy-detail, .btn-login-to-buy, .btn-back {
             width: 100%;
             justify-content: center;
             padding: 14px 20px;
@@ -327,6 +408,24 @@
                 <!-- CỘT HÌNH ẢNH SẢN PHẨM -->
                 <div class="col-lg-5 mb-4 mb-lg-0">
                     <div class="detail-img-box">
+                        <!-- NHÃN NỔI GÓC PHẢI TRÊN KHUNG ẢNH (Z-INDEX 30) -->
+                        @if (stockVal <= 0)
+                        {
+                            <span class="detail-floating-stock stock-out">HẾT HÀNG</span>
+                        }
+                        else if (stockVal == 1)
+                        {
+                            <span class="detail-floating-stock stock-last-one">🔥 CÒN 1 MÁY</span>
+                        }
+                        else if (stockVal <= 3)
+                        {
+                            <span class="detail-floating-stock stock-low">CÒN @stockVal MÁY</span>
+                        }
+                        else
+                        {
+                            <span class="detail-floating-stock stock-available">CÒN HÀNG</span>
+                        }
+
                         <img src="@finalImg"
                              alt="@nameVal"
                              onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=600&q=80';" />
@@ -338,16 +437,30 @@
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <span class="badge-code">MÃ MÁY: #@idVal</span>
                         <span class="badge-category"><i class="bi bi-laptop me-1"></i>@categoryName</span>
-                        @if (stockVal > 0)
+
+                        <!-- NHÃN TRẠNG THÁI TỒN KHO CHI TIẾT -->
+                        @if (stockVal <= 0)
                         {
-                            <span style="border: 1px solid #34d399; color: #34d399; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-weight: 700; background: rgba(52, 211, 153, 0.08);">
-                                <i class="bi bi-check2-circle me-1"></i> CÒN HÀNG (@stockVal máy sẵn sàng)
+                            <span class="badge-stock-pill stock-out">
+                                <i class="bi bi-x-circle me-1"></i> TẠM HẾT HÀNG
+                            </span>
+                        }
+                        else if (stockVal == 1)
+                        {
+                            <span class="badge-stock-pill stock-last-one">
+                                <i class="bi bi-fire me-1"></i> CÒN DUY NHẤT 1 MÁY
+                            </span>
+                        }
+                        else if (stockVal <= 3)
+                        {
+                            <span class="badge-stock-pill stock-low">
+                                <i class="bi bi-exclamation-circle me-1"></i> CÒN @stockVal MÁY
                             </span>
                         }
                         else
                         {
-                            <span style="border: 1px solid #f87171; color: #f87171; font-size: 12px; padding: 6px 12px; border-radius: 6px; font-weight: 700; background: rgba(248, 113, 113, 0.08);">
-                                <i class="bi bi-x-circle me-1"></i> TẠM HẾT HÀNG
+                            <span class="badge-stock-pill stock-available">
+                                <i class="bi bi-check2-circle me-1"></i> CÒN HÀNG (@stockVal máy sẵn sàng)
                             </span>
                         }
                     </div>
@@ -361,14 +474,14 @@
                     <!-- THÔNG SỐ KỸ THUẬT -->
                     <div>
                         <div style="color: #5df2d6; font-weight: 700; font-size: 13.5px; margin-bottom: 8px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
-                            <i class="bi bi-cpu-fill"></i> CẤU HÌNH & THÔNG SỐ KỸ THUẬT:
+                            <i class="bi bi-cpu-fill"></i> CẤU HÌNH &amp; THÔNG SỐ KỸ THUẬT:
                         </div>
                         <div class="specs-box">
                             @(string.IsNullOrWhiteSpace(specs) ? "Đang cập nhật thông số kỹ thuật chi tiết cho cấu hình máy này..." : specs)
                         </div>
                     </div>
 
-                    <!-- KHUNG THÔNG TIN GIAO HÀNG (THEO MẪU ẢNH) -->
+                    <!-- KHUNG THÔNG TIN GIAO HÀNG -->
                     <div class="delivery-notice-box">
                         <strong class="title-region">Tại Miền Nam:</strong>
                         <ul>
@@ -384,7 +497,7 @@
                         </div>
                     </div>
 
-                    <!-- KHU VỰC NÚT MUA HÀNG -->
+                    <!-- KHU VỰC NÚT MUA HÀNG & THÊM GIỎ -->
                     @if (isLoggedIn)
                     {
                         if (stockVal > 0)
@@ -400,8 +513,14 @@
                                            oninput="if(parseInt(this.value) > @stockVal) this.value = @stockVal; if(parseInt(this.value) < 1) this.value = 1;" />
                                 </div>
 
-                                <button type="submit" class="btn-buy-detail">
-                                    <i class="bi bi-cart3"></i> MUA NGAY
+                                <!-- Nút Thêm vào giỏ hàng -->
+                                <button type="submit" name="buyNow" value="false" class="btn-add-to-cart-detail">
+                                    <i class="bi bi-cart-plus-fill"></i> THÊM GIỎ HÀNG
+                                </button>
+
+                                <!-- Nút Mua ngay -->
+                                <button type="submit" name="buyNow" value="true" class="btn-buy-detail">
+                                    <i class="bi bi-lightning-charge-fill"></i> MUA NGAY
                                 </button>
 
                                 <a href="/Product" class="btn-back">

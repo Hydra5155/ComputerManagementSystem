@@ -3,7 +3,7 @@
     public class Order
     {
         public int OrderId { get; set; }
-        public DateTime OrderDate { get; set; } = DateTime.Now;
+        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerPhone { get; set; } = string.Empty;
         public string DeliveryAddress { get; set; } = string.Empty;
