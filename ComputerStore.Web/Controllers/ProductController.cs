@@ -59,12 +59,9 @@ namespace ComputerStore.Web.Controllers
                     }) ?? new List<Product>();
                 }
             }
-            catch
+            catch (Exception ex)
             {
-<<<<<<< HEAD
                 TempData["ErrorMessage"] = $"Lỗi kết nối máy chủ dữ liệu: {ex.Message}";
-=======
->>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
             }
 
             // Phân trang: 8 sản phẩm mỗi trang
@@ -81,10 +78,7 @@ namespace ComputerStore.Web.Controllers
                 .ToList();
 
             ViewBag.CurrentPage = page;
-<<<<<<< HEAD
             ViewBag.CurrentTotalPages = totalPages;
-=======
->>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
             ViewBag.TotalPages = totalPages;
             ViewBag.TotalItems = totalItems;
 
@@ -117,11 +111,8 @@ namespace ComputerStore.Web.Controllers
         [ActionName("Detail")]
         public async Task<IActionResult> Detail(int id)
         {
-<<<<<<< HEAD
             if (id <= 0) return RedirectToAction(nameof(Index));
 
-=======
->>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
             var client = _httpClientFactory.CreateClient("StoreAPI");
             Product? product = null;
 
@@ -137,9 +128,8 @@ namespace ComputerStore.Web.Controllers
                     });
                 }
             }
-            catch
+            catch (Exception ex)
             {
-<<<<<<< HEAD
                 TempData["ErrorMessage"] = $"Lỗi nạp chi tiết sản phẩm: {ex.Message}";
                 return RedirectToAction(nameof(Index));
             }
@@ -149,11 +139,6 @@ namespace ComputerStore.Web.Controllers
                 TempData["ErrorMessage"] = "Không tìm thấy thông tin sản phẩm yêu cầu.";
                 return RedirectToAction(nameof(Index));
             }
-=======
-            }
-
-            if (product == null) return NotFound();
->>>>>>> c185de045bf346af6557941082a4a8df0f427ebc
 
             return View("~/Views/Product/Detail.cshtml", product);
         }
